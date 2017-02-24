@@ -1,12 +1,10 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
-import sys
-
 
 def main():
-    print "Hello, Katya!"
-    print "This is {name}".format(name=sys.argv[0])
+    for i in range(7):
+        print '*'*i
 
 if __name__ == "__main__":
     main()
