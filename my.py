@@ -8,7 +8,7 @@ def main():
 
 
 def foo(arg):
-    pass
+    print "foo"
 
 if __name__ == "__main__":
     main()
