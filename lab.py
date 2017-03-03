@@ -6,5 +6,9 @@ def main():
     for i in range(7):
         print '*'*i
 
+
+def foo(arg):
+    pass
+
 if __name__ == "__main__":
     main()
