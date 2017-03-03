@@ -12,4 +12,4 @@ def foo(arg):
 
 if __name__ == "__main__":
     main()
-789
+123
