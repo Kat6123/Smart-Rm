@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from error import Error
 from os import (
     listdir,
     mkdir,
@@ -15,13 +14,16 @@ from os.path import (
 from ConfigParser import ConfigParser
 from datetime import datetime
 
+from error import Error
+from remove import remove_directory_content
 
-def check_basket(location):                 # TODO: check inner folders
+
+def check_basket(basket, file, info):               # TODO: check inner folders
     try:
-        if not exists(location["basket"]):
-            mkdir(location["basket"])
-            mkdir(location["files"])
-            mkdir(location["info"])
+        if not exists(basket):
+            mkdir(basket)
+            mkdir(file)
+            mkdir(info)
     except OSError as e:
         raise Error(e)
 
@@ -39,16 +41,10 @@ def make_trash_info_files(info_location, paths):
             trashinfo_config.write(fp)
 
 
-def view_content(location):
-    check_basket(location)
-
-    files = listdir(location["files"])          # try?
-    for file in files:
-        print file
-
-
 def remove(config):
-    check_basket(config.location)
+    check_basket(config.location["basket"],
+                 config.location["files"],
+                 config.location["info"])
 
     for file in config.files_to_delete:
         file_remove(config.location["files"], file)
@@ -61,3 +57,24 @@ def file_remove(basket_files_location, path):
 
 def tree_remove(basket_files_location, path):           # TODO: go in
     renames(path, join(basket_files_location, basename(path)))
+
+
+def manage_basket(config):
+    check_basket(config.location["basket"],
+                 config.location["files"],
+                 config.location["info"])
+    view_content(config.location["files"])
+
+    if config.recycle_basket_options["clear_basket"]:
+        clear_basket(config.location["files"], config.location["info"])
+
+
+def clear_basket(files_location, info_location):        # TODOOO@
+    remove_directory_content(files_location)
+    remove_directory_content(info_location)
+
+
+def view_content(file):               # if path doesn't exist
+    files = listdir(file)
+    for file in files:
+        print file
