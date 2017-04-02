@@ -63,10 +63,14 @@ def manage_basket(config):
     check_basket(config.location["basket"],
                  config.location["files"],
                  config.location["info"])
-    view_content(config.location["files"])
+
+    if config.recycle_basket_options["view_basket_content"]:
+        view_content(config.location["files"])
 
     if config.recycle_basket_options["clear_basket"]:
         clear_basket(config.location["files"], config.location["info"])
+    elif config.recycle_basket_options["restore_from_basket"]:
+        pass
 
 
 def clear_basket(files_location, info_location):        # TODOOO@
