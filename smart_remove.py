@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from shutil import move
 from os import (
     listdir,
     mkdir,
@@ -15,7 +16,9 @@ from ConfigParser import ConfigParser
 from datetime import datetime
 
 from error import Error
-from remove import remove_directory_content
+from remove import (
+    remove_directory_content,
+    remove_file)
 
 
 def check_basket(basket, file, info):               # TODO: check inner folders
@@ -41,7 +44,7 @@ def make_trash_info_files(info_location, paths):
             trashinfo_config.write(fp)
 
 
-def remove(config):
+def manage_remove(config):
     check_basket(config.location["basket"],
                  config.location["files"],
                  config.location["info"])
@@ -70,7 +73,24 @@ def manage_basket(config):
     if config.recycle_basket_options["clear_basket"]:
         clear_basket(config.location["files"], config.location["info"])
     elif config.recycle_basket_options["restore_from_basket"]:
-        pass
+        restore_files(config.files_to_restore,
+                      config.location["files"], config.location["info"])
+
+
+def restore_files(files_to_restore, files_location, info_location):
+    for file in files_to_restore:
+        file_path_in_files = join(files_location, file)
+        file_path_in_info = join(info_location, file+".trashinfo")
+        path_to_restore = get_path_from_trashinfo_files(file_path_in_info)
+        move(file_path_in_files, path_to_restore)
+        remove_file(file_path_in_info)
+
+
+def get_path_from_trashinfo_files(trashinfo_file):
+    trashinfo_config = ConfigParser()
+    trashinfo_config.read(trashinfo_file)
+
+    return trashinfo_config.get("Trash Info", "Path")
 
 
 def clear_basket(files_location, info_location):        # TODOOO@
