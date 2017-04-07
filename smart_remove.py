@@ -4,101 +4,123 @@ from os import (
     listdir,
     mkdir,
     rename,
-    renames
+    renames,
+    walk
 )
 from os.path import (
-    exists,
+    isdir,
     abspath,
     basename,
-    join
+    join,
+    islink,
+    isfile
 )
 from ConfigParser import ConfigParser
 from datetime import datetime
 
 from error import Error
-from remove import (
-    remove_directory_content,
-    remove_file)
 
 
-def check_basket(basket, file, info):               # TODO: check inner folders
-    try:
-        if not exists(basket):
-            mkdir(basket)
-            mkdir(file)
-            mkdir(info)
-    except OSError as e:
-        raise Error(e)
+class SmartRemover(object):
+    def _default_remove_permission(path):
+        return True
 
+    def __init__(self, basket_files_location, basket_info_location,
+                 confirm_file_deletion=_default_remove_permission,
+                 confirm_dir_deletion=_default_remove_permission):
 
-def make_trash_info_files(info_location, paths):
-    trashinfo_config = ConfigParser()
-    trashinfo_config.add_section("Trash Info")
+        self.files_location = basket_files_location
+        self.info_location = basket_info_location
 
-    for path in paths:
-        trashinfo_file = join(info_location, basename(path) + ".trashinfo")
-        trashinfo_config.set("Trash Info", "Path", abspath(path))
-        trashinfo_config.set("Trash Info", "Date", datetime.today())
+        self.confirm_file_deletion = confirm_file_deletion
+        self.confirm_dir_deletion = confirm_dir_deletion
+
+        self._trashinfo_config = ConfigParser()
+        self._trashinfo_config.add_section("Trash Info")
+
+    def make_trash_info_file(self, path):
+        trashinfo_file = join(self.info_location,
+                              basename(path) + ".trashinfo")
+        self._trashinfo_config.set("Trash Info", "Path", abspath(path))
+        self._trashinfo_config.set("Trash Info", "Date", datetime.today())
 
         with open(trashinfo_file, "w") as fp:
-            trashinfo_config.write(fp)
+            self._trashinfo_config.write(fp)
+
+    def file_remove(self, file):
+        if islink(file) or isfile(file):
+            if self.confirm_file_deletion(file):
+                try:
+                    rename(file, join(self.files_location, basename(file)))
+                except OSError as e:
+                    raise Error(e)
+
+                self.make_trash_info_file(file)
+        else:
+            pass
+
+    def empty_directory_remove(self, dir):
+        if not islink(dir) and isdir(dir) and not listdir(dir):
+            if self.confirm_dir_deletion(dir):
+                try:
+                    rename(dir, join(self.files_location, basename(dir)))
+                except OSError as e:
+                    raise Error(e)
+
+                self.make_trash_info_file(dir)
+        else:
+            pass
+
+    def tree_remove(self, tree):
+        if islink(tree) or isfile(tree):
+            self.file_remove(tree)
+            return
+
+        items_to_remove = []
+
+        for root, dirs, files in walk(tree):
+            items_in_root_to_remove = []
+
+            for file in files:
+                if self.confirm_file_deletion(file):
+                    items_in_root_to_remove.append(file)
+
+            if self.confirm_dir_deletion(root):   # XXX
+                if set(listdir(root)).issubset(items_to_remove):
+                    items_to_remove = list(set(items_to_remove)
+                                           - set(listdir(root)))
+                    items_to_remove.append(root)
+                else:
+                    items_to_remove.extend(items_in_root_to_remove)
+                    break
+            else:
+                items_to_remove.extend(items_in_root_to_remove)
+
+        for item in items_to_remove:
+            try:
+                renames(item, join(self.files_location, basename(item)))
+            except OSError as e:
+                raise Error(e)
+
+            self.make_trash_info_file(item)
 
 
-def manage_remove(config):
-    check_basket(config.location["basket"],
-                 config.location["files"],
-                 config.location["info"])
+class RemoveManager(object):
+    def __init__(self, config):
+        self.basket_location = config.location["basket"]
+        self.basket_files_location = config.location["files"]
+        self.basket_info_location = config.location["info"]
 
-    for file in config.files_to_delete:
-        file_remove(config.location["files"], file)
-    make_trash_info_files(config.location["info"], config.files_to_delete)
+        self.confirm_file_deletion = config.messages["ask_file_remove"]
+        self.confirm_dir_deletion = config.messages["ask_directory_remove"]
 
+        #check_basket(self.basket_location, self.basket_files_location,
+        #             self.basket_info_location)
 
-def file_remove(basket_files_location, path):
-    rename(path, join(basket_files_location, basename(path)))
+        #if config.modes[rm_recursively]:
+        #    pass
 
-
-def tree_remove(basket_files_location, path):           # TODO: go in
-    renames(path, join(basket_files_location, basename(path)))
-
-
-def manage_basket(config):
-    check_basket(config.location["basket"],
-                 config.location["files"],
-                 config.location["info"])
-
-    if config.recycle_basket_options["view_basket_content"]:
-        view_content(config.location["files"])
-
-    if config.recycle_basket_options["clear_basket"]:
-        clear_basket(config.location["files"], config.location["info"])
-    elif config.recycle_basket_options["restore_from_basket"]:
-        restore_files(config.files_to_restore,
-                      config.location["files"], config.location["info"])
-
-
-def restore_files(files_to_restore, files_location, info_location):
-    for file in files_to_restore:
-        file_path_in_files = join(files_location, file)
-        file_path_in_info = join(info_location, file+".trashinfo")
-        path_to_restore = get_path_from_trashinfo_files(file_path_in_info)
-        move(file_path_in_files, path_to_restore)
-        remove_file(file_path_in_info)
-
-
-def get_path_from_trashinfo_files(trashinfo_file):
-    trashinfo_config = ConfigParser()
-    trashinfo_config.read(trashinfo_file)
-
-    return trashinfo_config.get("Trash Info", "Path")
-
-
-def clear_basket(files_location, info_location):        # TODOOO@
-    remove_directory_content(files_location)
-    remove_directory_content(info_location)
-
-
-def view_content(file):               # if path doesn't exist
-    files = listdir(file)
-    for file in files:
-        print file
+        for file in config.files_to_delete:
+            pass
+        #file_remove(config.location["files"], file)
+        #make_trash_info_files(config.location["info"], config.files_to_delete)
