@@ -21,7 +21,7 @@ class Config(object):
 
         self.files_to_delete = []
         self.files_to_restore = []
-
+                                            # TODO: fix  empty basket subparser
         self.recycle_basket_options = dict.fromkeys(["clear_basket",
                                                     "restore_from_basket",
                                                     "view_basket_content"],
@@ -30,13 +30,22 @@ class Config(object):
                                     "ask_remove", "silent_mode",
                                     "remove_imitation"], False)
 
+        self.messages = dict.fromkeys(["ask_file_remove",
+                                      "ask_directory_remove"])
+
+        self._set_ask_messages()
         self._get_user_config()
         self._get_command_line_config()
         self._get_json_config()
 
+    def _set_ask_messages(self):
+        self.messages["ask_file_remove"] = ask_remove_message_maker("file")
+        self.messages["ask_dir_remove"] = ask_remove_message_maker("directory")
+
     def _get_command_line_config(self):             # TODO: verification
-        args = parser(self.command_line_args)            # ?
-        args.func(self, args)
+        parser = Parser()
+        parser.parse_args(self.command_line_args)
+        parser.set_config(self)
 
     def _get_user_config(self, path=user_config_path):
         config = ConfigParser()
@@ -48,90 +57,99 @@ class Config(object):
         pass
 
 
-def set_config_from_basket_subparser(config, args):
-    if args.clear_basket:
-        config.recycle_basket_options["clear_basket"] = True
-    elif args.restore_from_basket is not None:
-        config.recycle_basket_options["restore_from_basket"] = True
-        config.files_to_restore = get_available_basket_files(
-            args.restore_from_basket, config.location["files"])
-                                                     # TODO: files location
-    if args.view_basket_content:
-        config.recycle_basket_options["view_basket_content"] = True
+class Parser(object):
+    def __init__(self):
+        self._parser = ArgumentParser(add_help=True)
+        self.args = None                                # ???
 
+        subparsers = self._parser.add_subparsers()
+        basket_subparser = subparsers.add_parser('basket',
+                                                 help='Work with basket')
+        remove_subparser = subparsers.add_parser('remove',
+                                                 help='Move to trash')
 
-def set_config_from_remove_subparser(config, args):
-    config.files_to_delete = get_existance_paths(args.path)
+        self._set_basket_subparser(basket_subparser)
+        self._set_remove_subparser(remove_subparser)
 
-    if args.config_file_path is not None:
-        config._get_user_config(args.config_file_path)
-    elif args.rm_directory_recursively:
-        config.modes["rm_recursively"] = True
-    elif args.rm_empty_directory:
-        config.modes["rm_empty_directories"] = True
+    def _set_config_from_basket_subparser(self, config):
+        if self.args.clear_basket:
+            config.recycle_basket_options["clear_basket"] = True
+        elif self.args.restore_from_basket is not None:
+            config.recycle_basket_options["restore_from_basket"] = True
+            config.files_to_restore = get_available_basket_files(
+                self.args.restore_from_basket, config.location["files"])
+                                                         # TODO: files location
+        if self.args.view_basket_content:
+            config.recycle_basket_options["view_basket_content"] = True
 
-    if args.ask_before_remove:
-        config.modes["ask_remove"] = True
-    elif args.silent_mode:
-        config.modes["silent_mode"] = True
+    def _set_config_from_remove_subparser(self, config):
+        config.files_to_delete = get_existance_paths(self.args.path)
 
-    if args.remove_imitation:
-        config.modes["remove_imitation"] = True
+        if self.args.config_file_path is not None:
+            config._get_user_config(self.args.config_file_path)
+        elif self.args.rm_directory_recursively:
+            config.modes["rm_recursively"] = True
+        elif self.args.rm_empty_directory:
+            config.modes["rm_empty_directories"] = True
 
+        if self.args.ask_before_remove:
+            config.modes["ask_remove"] = True
+        elif self.args.silent_mode:
+            config.modes["silent_mode"] = True
 
-def set_basket_subparser(basket_subparser):
-    basket_subparser.add_argument('--clear', dest='clear_basket',
-                                  action='store_true', help='Clear basket')
-    basket_subparser.add_argument('--content', dest='view_basket_content',
-                                  action='store_true',
-                                  help='View basket content')
-    basket_subparser.add_argument('--restore', dest='restore_from_basket',
-                                  nargs='+', help='Restore files from basket')
-    basket_subparser.set_defaults(func=set_config_from_basket_subparser)
+        if self.args.remove_imitation:
+            config.modes["remove_imitation"] = True
 
+    def _set_basket_subparser(self, basket_subparser):
+        basket_subparser.add_argument('--clear', dest='clear_basket',
+                                      action='store_true', help='Clear basket')
+        basket_subparser.add_argument('--content', dest='view_basket_content',
+                                      action='store_true',
+                                      help='View basket content')
+        basket_subparser.add_argument('--restore', dest='restore_from_basket',
+                                      nargs='+',
+                                      help='Restore files from basket')
+        basket_subparser.set_defaults(
+            func=self._set_config_from_basket_subparser)
 
-def set_remove_subparser(remove_subparser):
-    exclusive_modes = remove_subparser.add_mutually_exclusive_group()
+    def _set_remove_subparser(self, remove_subparser):
+        exclusive_modes = remove_subparser.add_mutually_exclusive_group()
 
-    remove_subparser.add_argument('path', nargs='+',
-                                  help='Files to be deleted')
-    remove_subparser.add_argument('-d', '--dir', dest='rm_empty_directory',
-                                  action='store_true',
-                                  help='Remove empty directories')
-    remove_subparser.add_argument('-r', '-R', '--recursive',
-                                  dest='rm_directory_recursively',
-                                  action='store_true',
-                                  help='Remove directories and '
-                                  'their contents recursively')
+        remove_subparser.add_argument('path', nargs='+',
+                                      help='Files to be deleted')
+        remove_subparser.add_argument('-d', '--dir', dest='rm_empty_directory',
+                                      action='store_true',
+                                      help='Remove empty directories')
+        remove_subparser.add_argument('-r', '-R', '--recursive',
+                                      dest='rm_directory_recursively',
+                                      action='store_true',
+                                      help='Remove directories and '
+                                      'their contents recursively')
 
-    exclusive_modes .add_argument('-a', '--ask', dest='ask_before_remove',
-                                  action='store_true',
-                                  help='Prompt before every removal')
-    exclusive_modes .add_argument('-s', '--silent', dest='silent_mode',
-                                  action='store_true',
-                                  help='Launch in silent mode')
+        exclusive_modes .add_argument('-a', '--ask', dest='ask_before_remove',
+                                      action='store_true',
+                                      help='Prompt before every removal')
+        exclusive_modes .add_argument('-s', '--silent', dest='silent_mode',
+                                      action='store_true',
+                                      help='Launch in silent mode')
 
-    remove_subparser.add_argument('-i', '--imitation',
-                                  dest='remove_imitation', action='store_true',
-                                  help='Launch in dry-run mode')
-    remove_subparser.add_argument('--config', dest='config_file_path',
-                                  action='store', help='Path to configuration'
-                                  ' file for this launch')
+        remove_subparser.add_argument('-i', '--imitation', action='store_true',
+                                      dest='remove_imitation',
+                                      help='Launch in dry-run mode')
+        remove_subparser.add_argument('--config', dest='config_file_path',
+                                      action='store',
+                                      help='Path to configuration'
+                                      ' file for this launch')
 
-    remove_subparser.set_defaults(func=set_config_from_remove_subparser)
+        remove_subparser.set_defaults(
+            func=self._set_config_from_remove_subparser)
 
+    def set_config(self, config):
+        if not self.args:
+            self.args.func(config)
 
-def parser(command_line):                             # TODO: add doc; break
-    parser = ArgumentParser(add_help=True)
-    subparsers = parser.add_subparsers()
-
-    basket_subparser = subparsers.add_parser('basket', help='Work with basket')
-    remove_subparser = subparsers.add_parser('remove', help='Move to trash')
-
-    set_basket_subparser(basket_subparser)
-    set_remove_subparser(remove_subparser)
-
-    return parser.parse_args(command_line)
+    def parse_args(self, list_to_parse):
+        self.args = self._parser.parse_args(list_to_parse)
 
 
 def get_existance_paths(paths):
@@ -150,3 +168,13 @@ def get_available_basket_files(paths_basename, basket_files_location):
         if exists(abs_path):
             available.append(path)
     return available
+
+
+def ask_remove_message_maker(what_remove):
+    def _ask_function(path):
+        answer = raw_input("Do you want to remove"
+                           " {0} {1}".format(what_remove, path))
+        if answer == 'y':
+            return True
+        return False
+    return _ask_function
