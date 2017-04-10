@@ -1,0 +1,14 @@
+[
+    [
+        "basket", 
+        "~/.local/share/bucket/"
+    ], 
+    [
+        "files", 
+        "~/.local/share/bucket/files"
+    ], 
+    [
+        "info", 
+        "~/.local/share/bucket//info/"
+    ]
+]
