@@ -1,0 +1,5 @@
+recursive-include config *.cfg
+recursive-include config *.json
+include MANIFEST.in
+include *.rst
+global-exclude *.py[co]
