@@ -1,16 +1,25 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
-from config.set import Config
-from smart_remove import RemoveManager
-from basket import manage_basket
+from log.logger import tune_logger
+from logging import (
+    debug,
+    info,
+    warning,
+    error,
+    critical,
+    DEBUG,
+    INFO
+)
 
 
 def main():
-    config = Config()
-    remover = RemoveManager(config)
-    remover.remove_using_all_config_parametres()
-    manage_basket(config)
+    tune_logger(log_level=DEBUG, logfile_path="file")
 
+    debug("debug")
+    info("info")
+    warning("warning")
+    error("error")
+    critical("critical")
 
 if __name__ == '__main__':
     main()

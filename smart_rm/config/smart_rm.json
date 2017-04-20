@@ -1,14 +1,27 @@
 [
     [
-        "basket", 
+        "basket",
         "~/.local/share/bucket/"
-    ], 
+    ],
     [
-        "files", 
+        "files",
         "~/.local/share/bucket/files"
     ], 
     [
-        "info", 
+        "info",
         "~/.local/share/bucket//info/"
     ]
 ]
+
+basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s',
+            level=DEBUG)
+inst = Parser()
+
+def ask_remove_message_maker(what_remove):
+    def _ask_function(path):
+        answer = raw_input("Do you want to remove"
+                           " {0} \"{1}\"?: ".format(what_remove, path))
+        if answer == 'y':
+            return True
+        return False
+    return _ask_function

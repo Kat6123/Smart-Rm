@@ -25,15 +25,17 @@ def tune_logger(
     """
     root_logger = getLogger()
     root_logger.setLevel(log_level)
-
     formatter = Formatter(format)
 
-    if write_to_stderr:
-        console_handler = StreamHandler()
-        console_handler.setFormatter(formatter)
-        root_logger.addHandler(console_handler)
+    if write_to_stderr or logfile_path:
+        if write_to_stderr:
+            console_handler = StreamHandler()
+            console_handler.setFormatter(formatter)
+            root_logger.addHandler(console_handler)
 
-    if logfile_path:                # If not exist?
-        file_handler = FileHandler(logfile_path)
-        file_handler.setFormatter(formatter)
-        root_logger.addHandler(file_handler)
+        if logfile_path:                # If not exist?
+            file_handler = FileHandler(logfile_path)
+            file_handler.setFormatter(formatter)
+            root_logger.addHandler(file_handler)
+    else:
+        root_logger.disabled = True

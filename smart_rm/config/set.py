@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 #from ConfigParser import ConfigParser
 from argparse import ArgumentParser
@@ -9,7 +9,7 @@ class Config(object):
     """
     Contains launch configuration
 
-    Config object contains 4 parts: actions, paths, modes, politics,
+    Config object contains 4 fields: actions, paths, modes, politics,
     which are presented as dictionaries with relevant names.
     """
 
@@ -19,9 +19,9 @@ class Config(object):
                  args_list_to_parse=argv[1:]):
 
         self.actions = dict.fromkeys(["remove", "basket"], {})
-        self.actions.remove = {
+        self.actions["remove"] = {
             "file": True, "directory": False, "tree": False}
-        self.actions.basket = dict.fromkeys(  # TODO clean always True?
+        self.actions["basket"] = dict.fromkeys(  # TODO clean always True?
             ["browse_content", "clean", "restore_files"], False)
 
         self.file_paths_to = dict.fromkeys(
@@ -34,6 +34,13 @@ class Config(object):
 
         self.politics = dict.fromkeys(
             ["basket_cleaning", "conflict_resolution"], {})
+
+    def _set_config_from_parse_args(self, list_to_parse):
+        args = Parser().parse_args(list_to_parse)
+        pass
+
+    def _set_config_from_file(self, config_file_path):
+        pass
 
 
 class Parser(object):

@@ -105,7 +105,7 @@ class SmartRemover(object):     # TODO: handle errors! file not found and pass
         items_to_remove = []
 
         for root, dirs, files in walk(tree, topdown=False):
-            print root, dirs, files
+            #print root, dirs, files
             items_in_root_to_remove = []
             root = abspath(root)
 
