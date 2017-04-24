@@ -1,24 +1,60 @@
-"""docstring ."""
-# !/usr/bin/env python2.7
+#! /usr/bin/env python2.7
 # -*- coding: utf-8 -*-
-# from os.path import expanduser
-# from shutil import move
 from os import (
     listdir,
-    # rename,
-    walk
+    strerror,
+    stat,
+    walk,
+    getuid,
+    R_OK,
+    W_OK,
+    X_OK,
+    access
 )
 from os.path import (
     expanduser,
-    # isdir,
+    isdir,
     abspath,
     basename,
-    join
-    # islink,
-    # isfile
+    join,
+    exists,
+    ismount,
+    isfile,
+    dirname
 )
-# from ConfigParser import ConfigParser
-# from datetime import datetime
+from basket import Basket
+from error import (
+    PermissionError,
+    ExistError,
+    ModeError
+)
+from stat import (
+    S_ISBLK,
+    S_ISCHR,
+    S_ISFIFO,
+    S_ISSOCK
+)
+from logging import (
+    # debug,
+    # info,
+    # warning,
+    error
+    # critical
+)
+from errno import (
+    EISDIR,
+    ENOENT,
+    ENOTEMPTY,
+    EACCES
+)
+
+
+def check_path_existance(path):
+    abs_path = abspath(path)
+    if not access(dirname(path), R_OK):
+        raise PermissionError(EACCES, strerror(EACCES), path)
+    elif not exists(abs_path):
+        raise ExistError(ENOENT, strerror(ENOENT), abs_path)
 
 
 def default_true(path):
@@ -28,33 +64,35 @@ def default_true(path):
 class Remover(object):
     """docstring for ."""
     def __init__(
-            self, basket_location=expanduser("~/.local/share/basket"),
-            check_file_existance=default_true,
+            self,
+            check_file_existance=check_path_existance,
             confirm_removal=default_true,
-            check_file_access=default_true,
-            move_file_to_basket=default_true,
-            is_relevant_file_name=default_true,
-            follow_link=False
+            # check_file_access=default_true,
+            move_file_to_basket=default_true,       # TODO what default?
+            is_relevant_file_name=default_true
     ):
-        self.basket_location = basket_location
         self.check_file_existance = check_file_existance
         self.confirm_removal = confirm_removal
-        self.check_file_access = check_file_access
-        self.move_file_to_basket = move_file_to_basket
+        # self.check_file_access = Remover.check_file_access
+        self.move_file_to_basket = Remover.move_file_to_basket
         self.is_relevant_file_name = is_relevant_file_name
-        self.follow_link = follow_link
 
     def remove(self, item_path):
-        # TODO: check_file_location, is relevant
         self.check_file_existance(item_path)
-        self.confirm_removal(item_path)
-        self.check_file_access(item_path)
-        self.move_file_to_basket(item_path)
+
+        if isdir(item_path) and listdir(item_path):
+            raise ModeError(ENOTEMPTY, strerror(ENOTEMPTY), item_path)
+        if self.confirm_removal(item_path):
+            if not access(dirname(item_path, W_OK)) or
+            not access(dirname(item_path), X_OK):
+                raise PermissionError(EACCES, strerror(EACCES), item_path)
+            # self.move_file_to_basket(item_path)
 
     def remove_tree(self, tree):
-        # if islink(tree) or isfile(tree):
-        #     self.remove(tree)
-        #     return
+        if isfile(tree):
+            self.remove(tree)
+            return
+
         items_to_remove = []
 
         for root, dirs, files in walk(tree, topdown=False):
@@ -62,11 +100,12 @@ class Remover(object):
             root = abspath(root)
 
             for file in files:
-                if self.is_relevant_file_name(file):
+                if self.is_relevant_file_name(file)
+                and self.confirm_removal(file):
                     abs_path = join(root, basename(file))
                     items_in_root_to_remove.append(abs_path)
 
-            if self.confirm_dir_deletion(root):   # XXX set ? if basename
+            if self.confirm_removal(root):   # XXX set ? if basename
                 if set(listdir(root)).issubset(items_to_remove):
                     items_to_remove = list(set(items_to_remove)
                                            - set(listdir(root)))
@@ -78,84 +117,122 @@ class Remover(object):
                 items_to_remove.extend(items_in_root_to_remove)
 
         for item in items_to_remove:
-            try:
-                move(item, join(self.files_location, basename(item)))
-            except OSError as e:
-                raise Error(e)
+            self.move_file_to_basket(item)
 
-            self.make_trash_info_file(item)
+    @staticmethod
+    def check_file_access(file):
+        path_parent = dirname(file)
+        if not access(path_parent, W_OK) and access(path_parent, X_OK):
+            raise PermissionError(EACCES, strerror(EACCES), file)
+
+    @staticmethod
+    def move_file_to_basket(file):
+        pass
 
 
 class AdvancedRemover(object):
-    """docstring for ."""
     def __init__(
             self, basket_location=expanduser("~/.local/share/basket"),
             confirm_rm_always=False, not_confirm_rm=False,
-            # confirm_rm_if_file_write_ban=True,
-            dry_run=False,
-            follow_sym_link=False
+            confirm_rm_if_file_write_ban=True,
+            dry_run=False
     ):
         if confirm_rm_always:
-            confirm_removal = AdvancedRemover.interactive_mode
+            confirm_removal = AdvancedRemover._ask_remove
         elif confirm_rm_if_file_write_ban:
-            confirm_removal = AdvancedRemover.ask_if_file_has_not_write_access
+            confirm_removal = AdvancedRemover._ask_if_file_has_not_write_access
+
+        self.basket = Basket(
+            basket_location=basket_location,
+            dry_run=dry_run,
+        )
+        move_to_basket = self.basket.move_to_basket
 
         self.remover = Remover(
-            basket_location,
-            confirm_removal=confirm_removal,
-            follow_link=follow_sym_link
+            confirm_removal=confirm_removal,    # confirm_removal,
+            move_file_to_basket=move_to_basket
         )
+
+        self._special_file_modes = [S_ISBLK, S_ISCHR, S_ISFIFO, S_ISSOCK]
+        sys = ["/" + path for path in listdir("/")]
+        self._special_directories = ["/"] + sys
 
     def remove_list(
             self, paths_to_remove,
-            verify_file_remove,
-            check_file_existance=check_file_existance   # pylint?
+            verify_removal=default_true
     ):
         for path in paths_to_remove:
-            if AdvancedRemover.check_file_existance(path)
-            and verify_file_remove(path):
+            try:
+                check_path_existance(path)
+                verify_removal(path)
+
+                if isfile(path):
+                    self._check_special_file(path)
+                elif isdir(path):
+                    self._check_system_directory(path)
+
                 self.remover.remove_tree(path)
+            except (PermissionError, ExistError, ModeError) as why:
+                error(why)
 
     def remove_files(self, paths_to_remove):
         self.remove_list(
             paths_to_remove,
-            AdvancedRemover.verify_file_removal
+            verify_removal=AdvancedRemover._verify_file_removal
         )
 
     def remove_directories(self, paths_to_remove):
         self.remove_list(
             paths_to_remove,
-            AdvancedRemover.verify_directory_removal
+            verify_removal=AdvancedRemover._verify_directory_removal
         )
 
     def remove_trees(self, paths_to_remove):
-        self.remove_list(
-            paths_to_remove,
-            AdvancedRemover.verify_tree_removal
+        self.remove_list(paths_to_remove)
+
+    def _check_special_file(self, path):
+        if getuid:          # TODO explain!
+            mode = stat(path).st_mode
+            for special_mode in self._special_file_modes:
+                if special_mode(mode):  # TODO: different types
+                    raise PermissionError(EACCES, "Not regular file", path)
+
+    def _check_system_directory(self, path):
+        if getuid:
+            for special_directory in self._special_directories:
+                if path == special_directory:
+                    raise PermissionError(EACCES, "System directory", path)
+            if ismount(path):
+                raise PermissionError(EACCES, "Mount point", path)
+
+    @staticmethod
+    def _verify_file_removal(file):
+        if not isfile(file):
+            raise ModeError(EISDIR, strerror(EISDIR), file)
+
+    @staticmethod
+    def _verify_directory_removal(directory):
+        if isdir(directory) and not listdir(directory):
+            raise ModeError(ENOTEMPTY, strerror(ENOTEMPTY), directory)
+
+    @staticmethod
+    def _ask_if_file_has_not_write_access(path):
+        if access(path, W_OK):
+            return True
+        elif AdvancedRemover.ask(path, special_info="write-protected"):
+            return True
+
+        return False
+
+    @staticmethod
+    def _ask_remove(path, special_info=""):
+        if isfile(path):
+            what_remove = "file"
+        else:
+            what_remove = "directory"
+        answer = raw_input(
+            "Do you want to remove {0} {1} \"{2}\"?: "
+            "".format(special_info, what_remove, path)
         )
-
-    @staticmethod
-    def check_file_existance(path):
-        pass
-
-    @staticmethod
-    def verify_file_removal(file):
-        """"""
-        pass
-
-    @staticmethod
-    def verify_directory_removal(directory):
-        """docstring ."""
-        pass
-
-    @staticmethod
-    def verify_tree_removal(tree):
-        pass
-
-    @staticmethod
-    def interactive_mode(path):
-        pass
-
-    @staticmethod
-    def ask_if_file_has_not_write_access(path):
-        pass
+        if answer == 'y':
+            return True
