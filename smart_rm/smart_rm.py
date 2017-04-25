@@ -35,7 +35,7 @@ from stat import (
     S_ISSOCK
 )
 from logging import (
-    # debug,
+    debug,
     # info,
     # warning,
     error
@@ -51,7 +51,7 @@ from errno import (
 
 def check_path_existance(path):
     abs_path = abspath(path)
-    if not access(dirname(path), R_OK):
+    if not access(dirname(abs_path), R_OK):
         raise PermissionError(EACCES, strerror(EACCES), path)
     elif not exists(abs_path):
         raise ExistError(ENOENT, strerror(ENOENT), abs_path)
@@ -83,8 +83,10 @@ class Remover(object):
         if isdir(item_path) and listdir(item_path):
             raise ModeError(ENOTEMPTY, strerror(ENOTEMPTY), item_path)
         if self.confirm_removal(item_path):
-            if not access(dirname(item_path, W_OK)) or
-            not access(dirname(item_path), X_OK):
+            if (
+                not access(dirname(item_path), W_OK) or
+                not access(dirname(item_path), X_OK)
+            ):
                 raise PermissionError(EACCES, strerror(EACCES), item_path)
             # self.move_file_to_basket(item_path)
 
@@ -100,12 +102,12 @@ class Remover(object):
             root = abspath(root)
 
             for file in files:
-                if self.is_relevant_file_name(file)
-                and self.confirm_removal(file):
-                    abs_path = join(root, basename(file))
-                    items_in_root_to_remove.append(abs_path)
+                if self.is_relevant_file_name(file):
+                    if self.confirm_removal(file):
+                        abs_path = join(root, basename(file))
+                        items_in_root_to_remove.append(abs_path)
 
-            if self.confirm_removal(root):   # XXX set ? if basename
+            if self.confirm_removal(root):   # XXX set ? if basename + relev
                 if set(listdir(root)).issubset(items_to_remove):
                     items_to_remove = list(set(items_to_remove)
                                            - set(listdir(root)))
@@ -134,12 +136,14 @@ class AdvancedRemover(object):
     def __init__(
             self, basket_location=expanduser("~/.local/share/basket"),
             confirm_rm_always=False, not_confirm_rm=False,
-            confirm_rm_if_file_write_ban=True,
             dry_run=False
     ):
+        # XXX
         if confirm_rm_always:
             confirm_removal = AdvancedRemover._ask_remove
-        elif confirm_rm_if_file_write_ban:
+        elif not_confirm_rm:
+            confirm_removal = default_true
+        else:
             confirm_removal = AdvancedRemover._ask_if_file_has_not_write_access
 
         self.basket = Basket(
@@ -163,6 +167,7 @@ class AdvancedRemover(object):
     ):
         for path in paths_to_remove:
             try:
+                path = abspath(path)
                 check_path_existance(path)
                 verify_removal(path)
 
@@ -212,14 +217,14 @@ class AdvancedRemover(object):
 
     @staticmethod
     def _verify_directory_removal(directory):
-        if isdir(directory) and not listdir(directory):
+        if isdir(directory) and listdir(directory):
             raise ModeError(ENOTEMPTY, strerror(ENOTEMPTY), directory)
 
     @staticmethod
     def _ask_if_file_has_not_write_access(path):
         if access(path, W_OK):
             return True
-        elif AdvancedRemover.ask(path, special_info="write-protected"):
+        elif AdvancedRemover._ask_remove(path, special_info="write-protected"):
             return True
 
         return False
