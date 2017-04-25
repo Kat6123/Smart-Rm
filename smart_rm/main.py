@@ -19,9 +19,7 @@ def main():
         config.file_paths_to["basket"],
         config.modes["confirm_rm_always"],
         config.modes["not_confirm_rm"],
-        config.modes["confirm_rm_if_file_write_ban"],
-        config.modes["dry_run"],
-        config.modes["follow_sym_link"]
+        config.modes["dry_run"]
     )
 
     if config.actions["remove"]["tree"]:
