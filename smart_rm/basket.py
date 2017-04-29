@@ -20,8 +20,16 @@ from ConfigParser import ConfigParser
 from remove import (
     remove_directory_content,
     remove_tree,
-    remove_file
+    remove_file,
+    move_tree,
+    dry_run
 )
+_remove_import = [
+    remove_directory_content,
+    remove_tree,
+    remove_file,
+    move_tree
+]
 from error import OtherOSError
 from datetime import datetime
 from hashlib import sha256
@@ -129,6 +137,8 @@ class AdvancedBasket(object):
             basket_location=basket_location,
             check_hash=check_hash
         )
+        for func in _remove_import:
+            func = dry_run(dry_run)(func)
 
     def clean(self):
         pass
@@ -143,50 +153,135 @@ class AdvancedBasket(object):
         self.basket.view_content()
 
 
-# need mode to choose rename or not; what to do with dry_run?
-def rewrite_samename_files_without_asking(path, destination, dry_run=False):
-    target_path = join(dirname(destination), basename(path))
-    remove_tree(target_path)
-    move(path, target_path)
-    return target_path
+class DryRunMixin(object):
+    def dru_run(self, *args, **kwargs):
+        self._watch(*args, **kwargs)
+
+    def execute(self, *args, **kwargs):
+        self._watch(*args, **kwargs)
+        return self._do(*args, **kwargs)
+
+
+class Mover(DryRunMixin):        # Enough to inherit fron DryRunMixin
+    def __init__(self):
+        self.source, self.destination, self.target_path = "", ""
+        self.exists = False
+
+    def _watch(self, path, destination):
+        self.path = path
+        self.destination = destination
+        self.target_path = join(dirname(destination), basename(path))
+        if exists(self.target_path):
+            self.exists = True
+
+
+# need mode to choose rename or not
+class MoveAndRewriteIfSamenameFilesWithoutAsking(Mover):
+    def _watch(self, path, destination):
+        super(MoveAndRewriteIfSamenameFilesWithoutAsking, self)._watch(
+            path, destination
+        )
+
+        if self.exists:
+            pass
+
+    def _do(self):
+        if self.exists:             # TODO: CHANGE!
+            with open(self.target_path, "w") as target:
+                with open(self.path, "r") as path:
+                    target.write(path.read())
+            remove_tree(self.path)
+        else:
+            move_tree(self.path, self.target_path)
+        return self.target_path
 
 
 # need message!
-def rewrite_samename_files_with_asking(path, destination):
-    answer = raw_input(
-        "Do you want to rewrite {0} in {1}".format(basename(path), destination)
-    )
-    if answer:
-        return rewrite_samename_files_without_asking(path, destination)
-    else:
-        raise_exception_if_samename_files(path, destination)
+class MoveAndRewriteSamenameFilesWithAsking(Mover):
+    def __init__(self):
+        super(MoveAndRewriteSamenameFilesWithAsking, self).__init__()
+        self.answer = False
+
+    def _watch(self, path, destination):
+        super(MoveAndRewriteSamenameFilesWithAsking, self, path, destination)
+
+        if self.exists:
+            self.answer = raw_input(
+                "Do you want to rewrite {0} in {1}"
+                "".format(basename(path), destination)
+            )
+        # if not answer:
+        #     return
+
+    def _do(self):
+        if self.exists:
+            if self.answer:     # Change
+                MoveAndRewriteIfSamenameFilesWithoutAsking().execute(
+                    self.path,
+                    self.destination
+                )
+            else:
+                return
+        else:
+            move_tree(self.path, self.target_path)
+            return self.target_path
 
 
-def raise_exception_if_samename_files(path, destination):
-    raise OtherOSError(
-        "Already exists {0} in {1}".format(basename(path), destination)
-    )
+class MoveAndRaiseExceptionIfSamenameFiles(Mover):
+    def _watch(self, path, destination):
+        super(MoveAndRaiseExceptionIfSamenameFiles, self)._watch(
+            path,
+            destination
+        )       # add description
+
+        if self.exists:
+            pass
+
+    def _do(self):
+        if self.exists:
+            raise OtherOSError(
+                "Already exists {0} in {1}".format(self.path, self.destination)
+            )
+        move_tree(self.path, self.target_path)
+        return self.target_path
 
 
-def ask_new_name_for_movable_object(path, destination):
-    new_name = raw_input("Enter new name for {0}:".format(path))
-    new_path = join(destination, new_name)
+class MoveAndAskNewNameForMovableObject(Mover):
+    def _watch(self, path, destination):
+        super(MoveAndRaiseExceptionIfSamenameFiles, self)._watch(
+            path,
+            destination
+        )
+        if self.exists:
+            new_name = raw_input("Enter new name for {0}:".format(path))
+            if new_name:
+                self.target_path = join(self.destination, new_name)
+            else:
+                raise OtherOSError(             # Or just message?
+                    "Already exists {0} in {1}"
+                    "".format(self.path, self.destination)
+                )
 
-    if new_name:
-        move(path, new_path)
-        return new_path
-    else:
-        raise_exception_if_samename_files(path, destination)
+    def _do(self):
+        move_tree(self.path, self.target_path)
+        return self.target_path
 
 
-def new_name_for_movable_object_depending_on_amount_of_samename_files(
-    path,
-    destination
-):
-    count_of_samename_files = listdir(destination).count(basename(path))
-    new_path = join(
-        destination,
-        basename(path) + ".{0}".format(count_of_samename_files)
-    )
-    move(path, new_path)
-    return new_path
+class MoveAndMakeNewNameDependingOn(Mover):
+    def _watch(self, path, destination):
+        super(MoveAndRaiseExceptionIfSamenameFiles, self)._watch(
+            path,
+            destination
+        )
+        if self.exists:
+            count_of_samename_files = listdir(destination).count(
+                basename(path)
+            )
+            self.target_path = join(
+                destination,
+                basename(path) + ".{0}".format(count_of_samename_files)
+            )
+
+    def _do(self):
+        move(self.path, self.target_path)
+        return self.target_path
