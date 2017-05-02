@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
-#from ConfigParser import ConfigParser
+# from ConfigParser import ConfigParser
 from argparse import ArgumentParser
 from sys import argv
 
@@ -9,7 +9,7 @@ class Config(object):
     """
     Contains launch configuration
 
-    Config object contains 4 fields: actions, paths, modes, politics,
+    Config object contains four fields: actions, paths, modes, politics,
     which are presented as dictionaries with relevant names.
     """
 
@@ -28,16 +28,37 @@ class Config(object):
             ["config", "log", "basket", "remove", "restore"])
 
         self.modes = dict.fromkeys(
-            ["interactive", "dry_run", "silent",
-             "get_statistic", "follow_sym_link",
-             "check_hash_when_restore"], False)
+            ["confirm_rm_always", "not_confirm_rm",
+             "silent", "dry_run",
+             "get_statistic", "check_hash_when_restore"], False)
+        self.modes["confirm_if_file_has_not_write_access"] = True
 
         self.politics = dict.fromkeys(
             ["basket_cleaning", "conflict_resolution"], {})
 
+        self._set_config_from_parse_args(args_list_to_parse)
+
     def _set_config_from_parse_args(self, list_to_parse):
         args = Parser().parse_args(list_to_parse)
-        pass
+
+        if args.rm_directory_recursively:
+            self.actions["remove"]["tree"] = True
+        elif args.rm_empty_directory:
+            self.actions["remove"]["directory"] = True
+
+        if args.ask_before_remove:
+            self.modes["confirm_rm_always"] = True
+        elif args.force_remove:
+            self.modes["not_confirm_rm"] = True
+
+        if args.silent_mode:
+            self.modes["silent"] = True
+        if args.remove_imitation:
+            self.modes["dry_run"] = True
+
+        # if args.log_file_path:
+        #     self.file_paths_to["log"]
+        self.file_paths_to["remove"] = args.path
 
     def _set_config_from_file(self, config_file_path):
         pass
@@ -94,19 +115,15 @@ class Parser(object):
             '-i', '--interactive', dest='ask_before_remove',
             action='store_true', help='Prompt before every removal')
         self.config_group.add_argument(
+            '-f', '--force', action='store_true',
+            dest='force_remove', help='Never prompt')
+
+        self.config_group.add_argument(
             '-s', '--silent', dest='silent_mode', action='store_true',
             help='Launch in silent mode')
         self.config_group.add_argument(
             '--dry_run', action='store_true',
             dest='remove_imitation', help='Launch in dry-run mode')
-
-        self.config_group.add_argument(
-            '-f', '--force', action='store_true',
-            dest='force_remove', help='Never prompt')
-
-        self.config_group.add_argument(
-            '-l', '--link', action='store_true',
-            dest='follow_link', help='Follow symbolic links')
 
     def parse_args(self, list_to_parse=argv[1:]):
         return self.parser.parse_args(list_to_parse)

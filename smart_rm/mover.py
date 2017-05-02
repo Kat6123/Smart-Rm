@@ -44,15 +44,6 @@ from remove import (
 )
 
 
-class DryRunMixin(object):
-    def dru_run(self, *args, **kwargs):
-        self._watch(*args, **kwargs)
-
-    def execute(self, *args, **kwargs):
-        self._watch(*args, **kwargs)
-        return self._do()
-
-
 def check_path_existance(path):
     abs_path = abspath(path)
 
@@ -62,8 +53,28 @@ def check_path_existance(path):
         raise ExistError(ENOENT, strerror(ENOENT), abs_path)
 
 
+class DryRunMixin(object):
+    def __init__(
+        self,
+        dry_run=False
+    ):
+        if dry_run:
+            self.move = self.dry_run
+        else:
+            self.move = self.execute
+
+    def dru_run(self, *args, **kwargs):
+        self._watch(*args, **kwargs)
+
+    def execute(self, *args, **kwargs):
+        self._watch(*args, **kwargs)
+        return self._do()
+
+
 class Mover(DryRunMixin):           # move to directory
-    def __init__(self):
+    def __init__(self, dry_run=False):
+        super(Mover, self).__init__(dry_run)
+
         self.source, self.destination, self.final_path = None, None, None   # ?
         self.already_exists = False
 
@@ -169,8 +180,8 @@ class MoveAndRewriteIfSamenameFilesWithoutAsking(Mover):
 
 # need message!
 class MoveAndRewriteSamenameFilesWithAsking(Mover):
-    def __init__(self):
-        super(MoveAndRewriteSamenameFilesWithAsking, self).__init__()
+    def __init__(self, dry_run=False):
+        super(MoveAndRewriteSamenameFilesWithAsking, self).__init__(dry_run)
         self.answer = False
 
     def _watch(self, path, destination):

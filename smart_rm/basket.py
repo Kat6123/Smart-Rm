@@ -1,42 +1,24 @@
 # -*- coding: utf-8 -*-
-from shutil import (
-    move
-)
 from os import (
-    listdir,
     mkdir,
-    rename
 )
 from os.path import (
     expanduser,
     exists,
     join,
-    commonprefix,
-    abspath,
-    basename,
-    dirname
+    abspath
 )
 from ConfigParser import ConfigParser
 from remove import (
     remove_directory_content,
-    remove_tree,
-    remove_file,
-    move_tree
+    remove_file
 )
 from error import OtherOSError
-from datetime import datetime
-from hashlib import sha256
-from logging import (
-    error,
-    warning
-)
-from politics import (
-    MoveAndAskNewNameForMovableObject,
-    MoveAndMakeNewNameDependingOnAmount,
-    MoveAndRaiseExceptionIfSamenameFiles,
-    MoveAndRewriteSamenameFilesWithAsking,
-    MoveAndRewriteIfSamenameFilesWithoutAsking
-)
+# from logging import (
+#     error,
+#     warning
+# )
+import mover
 
 BASKET_FILES_DIRECTORY = "files"            # is it bad?
 BASKET_INFO_DIRECTORY = "info"
@@ -56,7 +38,7 @@ def get_basket_files_and_info_paths(basket_location):
 
 
 def check_basket_and_make_if_not_exist(basket_location):
-    if not exists(basket_location):
+    if not exists(abspath(basket_location)):
         try:
             mkdir(basket_location)
             files, info = get_basket_files_and_info_paths(basket_location)
@@ -72,26 +54,26 @@ class Basket(object):
         basket_location=expanduser(DEFAULT_BASKET_LOCATION),
         mover=None
     ):
-        self.basket_files_location,     # XXX
-        self.basket_info_location =
-        get_basket_files_and_info_paths(basket_location)
+        self.basket_files_location, self.basket_info_location = (
+            get_basket_files_and_info_paths(basket_location)
+        )
 
         if mover is None:
-            self.mover = Mover()
+            self.mover = mover.Mover()
         else:
             self.mover = mover
 
         self._trashinfo_config = ConfigParser()
-        self._trashinfo_config.add_section(INFO_SECTION_NAME)
+        self._trashinfo_config.add_section(INFO_SECTION)
 
     def restore_from_basket(self, item_path):
         item_path_in_files = join(self.basket_files_location, item_path)
         item_path_in_info = join(
-            self.basket_info_location, item.path + INFO_FILE_EXPANSION
+            self.basket_info_location, item_path + INFO_FILE_EXPANSION
         )
 
         restore_path = self._get_restore_path_from_trashinfo_files(
-            file_path_in_info
+            item_path_in_info
         )       # XXX check basket?
 
         if self.mover.move(item_path_in_files, restore_path):
@@ -101,6 +83,9 @@ class Basket(object):
         self._trashinfo_config.read(trashinfo_file)     # add try catch
 
         return self._trashinfo_config.get(INFO_SECTION, OLD_PATH_OPTION)
+
+    def _check_hash(self):
+        pass
 
     def clear_basket(files_location, info_location):
         remove_directory_content(files_location)
@@ -114,24 +99,14 @@ class Basket(object):
 class AdvancedBasket(object):
     def __init__(
         self,
-        basket_location=expanduser("~/.local/share/basket"),
-        move_basket_name_conflicts=MoveAndMakeNewNameDependingOnAmount,
-        restore_name_conflicts=MoveAndRewriteSamenameFilesWithAsking,
-        clean_basket_politic="",
+        basket_location=expanduser(DEFAULT_BASKET_LOCATION),
+        # clean_basket_politic="",
         check_hash=False,
-        dry_run=False
+        # dry_run=False
     ):
-        if dry_run:
-            solve_basket_name_conflicts = move_basket_name_conflicts()._watch
-            solve_restore_name_conflicts = restore_name_conflicts()._watch
-        else:
-            solve_basket_name_conflicts = move_basket_name_conflicts.execute
-            solve_restore_name_conflicts = restore_name_conflicts.execute
 
         self.basket = Basket(
-            basket_location=basket_location,
-            move_to_basket=solve_basket_name_conflicts,
-            move_from_basket=solve_restore_name_conflicts
+            basket_location=basket_location
         )
 
     def clean(self):

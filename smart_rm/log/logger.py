@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from logging import (
     INFO,
+    DEBUG,
     getLogger,
     Formatter,
     StreamHandler,
@@ -11,7 +12,7 @@ from logging import (
 
 def tune_logger(
         format=u'%(levelname)-8s [%(asctime)s] %(message)s',
-        log_level=INFO,
+        log_level=DEBUG,     # TODO: make INFO
         write_to_stderr=True,
         logfile_path=""
 ):

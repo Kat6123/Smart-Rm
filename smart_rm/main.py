@@ -3,6 +3,7 @@
 from log.logger import tune_logger
 from config.set import Config
 from smart_rm import AdvancedRemover
+# from basket import AdvancedBasket
 
 
 def main():
@@ -19,7 +20,9 @@ def main():
         config.file_paths_to["basket"],
         config.modes["confirm_rm_always"],
         config.modes["not_confirm_rm"],
-        config.modes["dry_run"]
+        config.modes["confirm_if_file_has_not_write_access"],
+        config.modes["dry_run"],
+        config.politics["conflict_resolution"]
     )
 
     if config.actions["remove"]["tree"]:
