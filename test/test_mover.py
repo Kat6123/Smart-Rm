@@ -5,7 +5,7 @@ from unittest import (
     main
 )
 from smart_rm.mover import Mover
-from smart_rm.error import OtherOSError
+from smart_rm.error import SystemError
 
 
 class TestMoverCheckMethods(TestCase):
@@ -30,7 +30,7 @@ class TestMoverCheckMethods(TestCase):
     def test_check_distance_is_directory(self):
         self.mover.tune_paths("source", __file__)
         with self.assertRaisesRegexp(
-            OtherOSError,
+            SystemError,
             "{0}".format(os.path.basename(self.mover.destination))
         ):
             self.mover.check_distance_is_directory()
@@ -38,7 +38,7 @@ class TestMoverCheckMethods(TestCase):
     def test_check_cycle(self):
         self.mover.tune_paths(os.path.pardir, os.path.curdir)
         with self.assertRaisesRegexp(
-            OtherOSError,
+            SystemError,
             "{0}.+{1}".format(self.mover.source, self.mover.destination)
         ):
             self.mover.check_cycle()

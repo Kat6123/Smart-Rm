@@ -4,9 +4,9 @@ import os
 import os.path
 import stat
 from error import (
-    PermissionError,
+    AccessError,
     ExistError,
-    OtherOSError
+    SystemError
 )
 from remove import (
     move_tree
@@ -68,7 +68,7 @@ class Mover(DryRunMixin):           # shutil.move to directory
 
     def _do(self):
         if self.already_exists:
-            raise OtherOSError(
+            raise SystemError(
                 "Already exists {0} in {1}"
                 "".format(self.source, self.destination)
             )
@@ -88,14 +88,14 @@ class Mover(DryRunMixin):           # shutil.move to directory
 
     def check_distance_is_directory(self):
         if not os.path.isdir(self.destination):
-            raise OtherOSError(
+            raise SystemError(
                 "Distance {0} is not directory"
                 "".format(os.path.basename(self.destination))
             )
 
     def check_directory_access(self, directory):
         if not os.access(directory, os.W_OK) and os.access(directory, os.X_OK):
-            raise PermissionError(
+            raise AccessError(
                 errno.EACCES, os.strerror(errno.EACCES), file
             )
 
@@ -104,7 +104,7 @@ class Mover(DryRunMixin):           # shutil.move to directory
             mode = os.stat(self.source).st_mode
             for special_mode in self._special_file_modes:
                 if special_mode(mode):  # TODO: different types
-                    raise PermissionError(
+                    raise AccessError(
                         errno.EACCES, "Not regular file", self.source
                     )
 
@@ -112,16 +112,16 @@ class Mover(DryRunMixin):           # shutil.move to directory
         if os.getuid:
             for special_directory in self._special_directories:
                 if self.source == special_directory:
-                    raise PermissionError(
+                    raise AccessError(
                         errno.EACCES, "System directory", self.source
                     )
             if os.path.ismount(self.source):
-                raise PermissionError(errno.EACCES, "Mount point", self.source)
+                raise AccessError(errno.EACCES, "Mount point", self.source)
 
     def check_cycle(self):          # Explain in doc!
         prefix = os.path.commonprefix([self.source, self.destination])
         if prefix == self.source:
-            raise OtherOSError(
+            raise SystemError(
                 "Cannot move {0} into itself {1}"
                 "".format(self.source, self.destination)
             )

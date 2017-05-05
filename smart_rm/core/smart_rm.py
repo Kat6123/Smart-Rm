@@ -15,7 +15,7 @@ from os.path import (
     isfile
 )
 from error import (
-    PermissionError,
+    AccessError,
     ExistError,
     ModeError
 )
@@ -205,8 +205,8 @@ class AdvancedRemover(object):
             try:
                 verify_removal(path)
                 self.remover.remove_tree(path)
-            except (PermissionError, ExistError, ModeError) as why:
-                error(why)
+            except (AccessError, ExistError, ModeError) as error:
+                error(error)
 
     def remove_files(self, paths_to_remove):
         self.remove_list(

@@ -15,35 +15,35 @@ from shutil import (
     move,
     Error
 )
-from error import OtherOSError
+from error import SystemError
 
 
 def remove_file(path):
     try:
         remove(path)
-    except OSError as why:
-        raise OtherOSError(why.errno, why.strerror, why.filename)
+    except OSError as error:
+        raise SystemError(error.errno, error.strerror, error.filename)
 
 
 def remove_dir(path):
     try:
         rmdir(path)
-    except OSError as why:
-        raise OtherOSError(why.errno, why.strerror, why.filename)
+    except OSError as error:
+        raise SystemError(error.errno, error.strerror, error.filename)
 
 
 def remove_tree(path):
     try:
         rmtree(path)
-    except Error as why:
-        raise OtherOSError(why)
+    except Error as error:
+        raise SystemError(error)
 
 
 def remove_link(path):
     try:
         unlink(path)
-    except OSError as why:
-        raise OtherOSError(why.errno, why.strerror, why.filename)
+    except OSError as error:
+        raise SystemError(error.errno, error.strerror, error.filename)
 
 
 def remove_directory_content(directory):
@@ -61,5 +61,5 @@ def remove_directory_content(directory):
 def move_tree(src, dst):
     try:
         move(src, dst)
-    except Error as why:
-        raise OtherOSError(why.errno, why.strerror, why.filename)
+    except Error as error:
+        raise SystemError(error.errno, error.strerror, error.filename)

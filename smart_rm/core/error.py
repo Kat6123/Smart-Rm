@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 
 
-class SmartRMError(EnvironmentError):
+class SmartError(EnvironmentError):
     pass
 
 
-class PermissionError(SmartRMError):
+class AccessError(SmartError):
     pass
 
 
-class ExistError(SmartRMError):
+class ExistError(SmartError):
     pass
 
 
-class ModeError(SmartRMError):
+class ModeError(SmartError):
     pass
 
 
-class OtherOSError(SmartRMError):
+class SystemError(SmartError):
     pass
