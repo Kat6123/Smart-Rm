@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+from smart_rm.utils import (
+    TRASH_LOCATION,
+    SM_REMOVE_SOLVE_NAME_CONFLICT,
+    TRASH_SOLVE_NAME_CONFLICT,
+    TRASH_CLEAN_POLITIC
+)
 
 
 class Namespace(object):
@@ -18,30 +24,50 @@ class SmartRemoveNamespace(Namespace):
             "remove_tree": False
         }
 
-        self.path_to = {}
-        = dict.fromkeys(
-            ["trash", "remove"]
-        )
+        self.path_to = {
+            "trash": TRASH_LOCATION,
+            "remove": []
+        }
 
-        self.modes = dict.fromkeys(
-            ["confirm_rm_always", "not_confirm_rm",
-             "silent", "dry_run",
-             "get_statistic", "check_hash_when_restore"], False)
-        self.modes["confirm_if_file_has_not_write_access"] = True
+        self.modes = {
+            "not_confirm_rm": False,
+            "confirm_if_file_not_write_access": True,
+            "confirm_rm": False,
 
-        self.politics = dict.fromkeys(
-            ["trash_cleaning", "conflict_resolution"], {}
-        )
+            "silent": False,
+            "dry_run": False,
+        }
+
+        self.politics = {
+            "solve_name_conflict_when_remove": SM_REMOVE_SOLVE_NAME_CONFLICT
+        }
+
+        self.regex = None
 
 
 class BasketNamespace(Namespace):
     def __init__(self):
-        self.actions["trash"] = dict.fromkeys(  # TODO clean always True?
-            ["browse_content", "clean", "restore_files"], False
-        )
-                self.file_paths_to = dict.fromkeys(
-                    ["trash", "remove", "restore"]
-                )
+        self.actions = {
+            "display": True,
+            "clean": False,
+            "restore": False
+        }
+
+        self.path_to = {
+            "trash": TRASH_LOCATION,
+            "restore": []
+        }
+
+        self.modes = {
+            "check_hash": False,
+            "dry_run": False,
+            "silent": False
+        }
+
+        self.politics = {
+            "clean": TRASH_CLEAN_POLITIC,
+            "solve_name_conflict_when_restore": TRASH_SOLVE_NAME_CONFLICT
+        }
 
 
 class NamespaceReader(object):
