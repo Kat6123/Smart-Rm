@@ -5,75 +5,16 @@ from argparse import ArgumentParser
 from sys import argv
 
 
-class Config(object):
-    """
-    Contains launch configuration
-
-    Config object contains four fields: actions, paths, modes, politics,
-    which are presented as dictionaries with relevant names.
-    """
-
-    def __init__(self,
-                 user_config_file_path="smart_rm.conf",
-                 json_config_file_path="smart_rm.json",
-                 args_list_to_parse=argv[1:]):
-
-        self.actions = dict.fromkeys(["remove", "basket"], {})
-        self.actions["remove"] = {
-            "file": True, "directory": False, "tree": False}
-        self.actions["basket"] = dict.fromkeys(  # TODO clean always True?
-            ["browse_content", "clean", "restore_files"], False)
-
-        self.file_paths_to = dict.fromkeys(
-            ["config", "log", "basket", "remove", "restore"])
-
-        self.modes = dict.fromkeys(
-            ["confirm_rm_always", "not_confirm_rm",
-             "silent", "dry_run",
-             "get_statistic", "check_hash_when_restore"], False)
-        self.modes["confirm_if_file_has_not_write_access"] = True
-
-        self.politics = dict.fromkeys(
-            ["basket_cleaning", "conflict_resolution"], {})
-
-        self._set_config_from_parse_args(args_list_to_parse)
-
-    def _set_config_from_parse_args(self, list_to_parse):
-        args = Parser().parse_args(list_to_parse)
-
-        if args.rm_directory_recursively:
-            self.actions["remove"]["tree"] = True
-        elif args.rm_empty_directory:
-            self.actions["remove"]["directory"] = True
-
-        if args.ask_before_remove:
-            self.modes["confirm_rm_always"] = True
-        elif args.force_remove:
-            self.modes["not_confirm_rm"] = True
-
-        if args.silent_mode:
-            self.modes["silent"] = True
-        if args.remove_imitation:
-            self.modes["dry_run"] = True
-
-        # if args.log_file_path:
-        #     self.file_paths_to["log"]
-        self.file_paths_to["remove"] = args.path
-
-    def _set_config_from_file(self, config_file_path):
-        pass
-
-
 class Parser(object):
     def __init__(self):
         self.parser = ArgumentParser(add_help=True)
 
         self.action_group = self.parser.add_argument_group()
         self.config_group = self.parser.add_argument_group()
-        self._add_action_flags()
-        self._add_config_flags()
+        self.add_action_flags()
+        self.add_config_flags()
 
-    def _add_action_flags(self):
+    def add_action_flags(self):
         """
         Add action flags
 
@@ -102,7 +43,7 @@ class Parser(object):
             '--restore', dest='restore_from_basket',
             nargs='+', help='Restore files from basket')
 
-    def _add_config_flags(self):
+    def add_config_flags(self):
         """ Add flags for configuration """
         self.config_group.add_argument(
             '--config', dest='config_file_path', action='store',
