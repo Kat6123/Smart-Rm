@@ -30,15 +30,15 @@ from errno import (
     EISDIR,
     ENOTEMPTY
 )
-from basket import (
+from trash import (
     INFO_SECTION,
     OLD_PATH_OPTION,
     REMOVE_DATE_OPTION,
     FILE_HASH_OPTION,
     INFO_FILE_EXPANSION,
-    DEFAULT_BASKET_LOCATION,
-    get_basket_files_and_info_paths,
-    check_basket_and_make_if_not_exist
+    DEFAULT_TRASH_LOCATION,
+    get_trash_files_and_info_paths,
+    check_trash_and_make_if_not_exist
 )
 from datetime import datetime
 from hashlib import sha256
@@ -82,14 +82,14 @@ def ask_remove(path, special_info=""):
 class SmartRemover(object):
     def __init__(           # should i call super for object?
             self,
-            basket_location=expanduser(DEFAULT_BASKET_LOCATION),
+            trash_location=expanduser(DEFAULT_TRASH_LOCATION),
             confirm_removal=lambda: True,
             mover=None,
             is_relevant_file_name=lambda: True
     ):
-        self.basket_location = basket_location
-        self.basket_files_location, self.basket_info_location = (
-            get_basket_files_and_info_paths(basket_location)
+        self.trash_location = trash_location
+        self.trash_files_location, self.trash_info_location = (
+            get_trash_files_and_info_paths(trash_location)
         )
 
         if mover is None:
@@ -151,7 +151,7 @@ class SmartRemover(object):
 
     def make_trash_info_file(self, old_path):
         trashinfo_file = join(
-            self.basket_info_location,
+            self.trash_info_location,
             basename(old_path) + INFO_FILE_EXPANSION
         )
 
@@ -169,15 +169,15 @@ class SmartRemover(object):
                 self._trashinfo_config.write(fp)
 
     def _smart_remove(self, item_path):
-        check_basket_and_make_if_not_exist(self.basket_location)
+        check_trash_and_make_if_not_exist(self.trash_location)
 
-        if self.mover.move(item_path, self.basket_files_location):
+        if self.mover.move(item_path, self.trash_files_location):
             self.make_trash_info_file(item_path)
 
 
 class AdvancedRemover(object):
     def __init__(
-            self, basket_location=expanduser(DEFAULT_BASKET_LOCATION),
+            self, trash_location=expanduser(DEFAULT_TRASH_LOCATION),
             confirm_rm_always=False, not_confirm_rm=False,
             confirm_if_file_has_not_write_access=True,
             dry_run=False,
@@ -193,7 +193,7 @@ class AdvancedRemover(object):
 
         self.remover = SmartRemover(
             confirm_removal=confirm_removal,
-            basket_location=basket_location,
+            trash_location=trash_location,
             mover=getattr(mover, solve_samename_files_politic)()
         )
 

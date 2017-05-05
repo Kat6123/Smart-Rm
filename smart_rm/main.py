@@ -1,12 +1,20 @@
 #! /usr/bin/env python2.7
 # -*- coding: utf-8 -*-
+from config.commad_line_args_reader import ArgsReader
+from config.namespace import Namespace
 from log.logger import tune_logger
 from config.set import Config
 from smart_rm import AdvancedRemover
-# from basket import AdvancedBasket
+# from trash import AdvancedTrashCan
 
 
 def main():
+    command_line_config = ArgsReader()
+
+    namespace = Namespace()
+
+    if command_line_config.path_to_config:
+        namespace.override_by_another_namespace()
     config = Config()
 
     if config.modes["silent"]:          # XXX
@@ -17,7 +25,7 @@ def main():
         tune_logger(logfile_path=config.file_paths_to["log"])
 
     remover = AdvancedRemover(
-        config.file_paths_to["basket"],
+        config.file_paths_to["trash"],
         config.modes["confirm_rm_always"],
         config.modes["not_confirm_rm"],
         config.modes["confirm_if_file_has_not_write_access"],

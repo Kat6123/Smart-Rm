@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
 
-class RemoverNamespace(object):
+class RMNamespace(object):
     def __init__(self):
-        self.actions = dict.fromkeys(["remove", "basket"], {})
+        self.actions = dict.fromkeys(["remove", "trash"], {})
         self.actions["remove"] = {
             "file": True, "directory": False, "tree": False}
-        self.actions["basket"] = dict.fromkeys(  # TODO clean always True?
+        self.actions["trash"] = dict.fromkeys(  # TODO clean always True?
             ["browse_content", "clean", "restore_files"], False
         )
 
         self.file_paths_to = dict.fromkeys(
-            ["basket", "remove", "restore"]
+            ["trash", "remove", "restore"]
         )
 
         self.modes = dict.fromkeys(
@@ -21,7 +21,7 @@ class RemoverNamespace(object):
         self.modes["confirm_if_file_has_not_write_access"] = True
 
         self.politics = dict.fromkeys(
-            ["basket_cleaning", "conflict_resolution"], {}
+            ["trash_cleaning", "conflict_resolution"], {}
         )
 
     def override_by_another_namespace(self, namespace):
@@ -30,3 +30,11 @@ class RemoverNamespace(object):
                 attribute,
                 self.__dict__(attribute)   # Default value if key is not exist
             )
+
+
+class NamespaceReader(object):
+    def __init__(self):
+        self.namespace = RMNamespace()
+
+    def get_namespace(self):
+        return self.namespace
