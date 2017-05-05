@@ -6,6 +6,7 @@ from error import (
     PermissionError,
     ExistError
 )
+END_OF_STRING = "$"
 
 
 def check_path_existance(path):
@@ -19,7 +20,9 @@ def check_path_existance(path):
         raise ExistError(errno.ENOENT, os.strerror(errno.ENOENT), abs_path)
 
 
-def get_regex_matcher(regex=".*a$"):
+def get_regex_matcher(regex):
+    regex = regex + END_OF_STRING
+
     def match_path(path):
         matches = re.match(regex, os.path.basename(path))
         if matches:
