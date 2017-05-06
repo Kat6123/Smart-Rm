@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+LOG_LEVEL = "warning"
+
 TRASH_FILES_DIRECTORY = "files"
 TRASH_INFO_DIRECTORY = "info"
 
@@ -14,5 +16,9 @@ TRASH_LOCATION = "~/.local/share/trash"
 LOG_FILE_LOCATION = "/var/log/smart_rm.log"
 APP_DIRECTORY = "~/.smart_rm"
 DEFAULT_CONFIG_NAME = "config.cfg"
+
+SM_REMOVE_SOLVE_NAME_CONFLICT = "MoveAndMakeNewNameDependingOnAmount"
+TRASH_SOLVE_NAME_CONFLICT = "MoveAndAskNewNameForMovableObject"
+TRASH_CLEAN_POLITIC = ""
 
 END_OF_STRING = "$"

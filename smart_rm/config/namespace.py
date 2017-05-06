@@ -45,7 +45,7 @@ class SmartRemoveNamespace(Namespace):
         self.regex = None
 
 
-class BasketNamespace(Namespace):
+class TrashNamespace(Namespace):
     def __init__(self):
         self.actions = {
             "display": True,

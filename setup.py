@@ -1,15 +1,21 @@
-from setuptools import setup, find_packages
-from os.path import join, dirname
-from smart_rm import __version__
+# -*- coding: utf-8 -*-
+import os.path
+import setuptools
 
-setup(
+
+setuptools.setup(
     name='smart_rm',
-    # version=__version__,
-    packages=find_packages(),
-    long_description=open(join(dirname(__file__), 'README.rst')).read(),
+    packages=setuptools.find_packages(),
+    long_description=open(
+        os.path.join(os.path.dirname(__file__), 'README.rst')
+    ).read(),
     include_package_data=True,
     test_suite="test",
     install_requires=['argparse'],
     entry_points={
-        'console_scripts': ['smart_rm = smart_rm.main:main']}
+        'console_scripts': [
+            'smart_rm = smart_rm.smart_remove_main:main',
+            'trash = smart_rm.trash_main:main'
+            ]
+    }
 )

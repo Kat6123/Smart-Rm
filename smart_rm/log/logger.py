@@ -41,7 +41,3 @@ def tune_logger(
             root_logger.addHandler(file_handler)
     else:
         root_logger.disabled = True
-
-
-def tune_silent_logger(logfile_path):
-    tune_logger(write_to_stderr=False, logfile_path=logfile_path)
