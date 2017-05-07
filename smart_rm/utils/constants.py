@@ -2,6 +2,8 @@
 
 LOG_LEVEL = "warning"
 
+ROOT = "/"
+
 TRASH_FILES_DIRECTORY = "files"
 TRASH_INFO_DIRECTORY = "info"
 

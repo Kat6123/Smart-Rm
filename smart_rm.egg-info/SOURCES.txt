@@ -14,7 +14,7 @@ smart_rm/config/__init__.py
 smart_rm/config/namespace.py
 smart_rm/config/readers/__init__.py
 smart_rm/config/readers/cfg_reader.py
-smart_rm/config/readers/commad_line_args_reader.py
+smart_rm/config/readers/command_line_args_reader.py
 smart_rm/config/readers/json_reader.py
 smart_rm/core/__init__.py
 smart_rm/core/error.py
