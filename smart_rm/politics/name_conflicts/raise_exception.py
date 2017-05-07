@@ -8,11 +8,11 @@ class MoveAndRaiseExceptionIfSamenameFiles(Mover):
             destination
         )       # add description
 
-        if self.exists:
+        if self.already_exists:
             pass
 
     def _do(self):
-        if self.exists:
+        if self.already_exists:
             raise SystemError(
                 "Already exists {0} in {1}"
                 "".format(self.source, self.destination)

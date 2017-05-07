@@ -8,6 +8,14 @@ from smart_rm.utils import (
 )
 
 
+def get_correct_path(path):
+    return os.path.abspath(os.path.expanduser(path))
+
+
+def default_true(path):
+    return True
+
+
 def get_regex_matcher(regex):
     regex = regex + END_OF_STRING
 
@@ -18,8 +26,10 @@ def get_regex_matcher(regex):
     return match_path
 
 
-def get_trash_files_and_info_paths(trash_location):         # ? expanduser
+def get_trash_files_and_info_paths(trash_location):
+    correct_path = get_correct_path(trash_location)
+
     return (
-        os.path.join(trash_location, TRASH_FILES_DIRECTORY),
-        os.path.join(trash_location, TRASH_INFO_DIRECTORY)
+        os.path.join(correct_path, TRASH_FILES_DIRECTORY),
+        os.path.join(correct_path, TRASH_INFO_DIRECTORY)
     )

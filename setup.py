@@ -14,7 +14,7 @@ setuptools.setup(
     install_requires=['argparse'],
     entry_points={
         'console_scripts': [
-            'smart_rm = smart_rm.smart_remove_main:main',
+            'smart_rm = smart_rm.smart_rm_main:main',
             'trash = smart_rm.trash_main:main'
             ]
     }

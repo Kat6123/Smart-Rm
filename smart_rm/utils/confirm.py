@@ -2,11 +2,11 @@
 import errno
 import os
 import os.path
-from smart_rm import ModeError
+from smart_rm.core.error import ModeError
 
 
 def ask_if_file_has_not_write_access(path):
-    if os.path.access(path, os.W_OK):
+    if os.access(path, os.W_OK):
         return True
     elif ask_remove(path, special_info="write-protected"):
         return True

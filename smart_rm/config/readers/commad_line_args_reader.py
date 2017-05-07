@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import argparse
-from smart_rm.config import (
+from smart_rm.config.namespace import (
     SmartRemoveNamespace,
     TrashNamespace,
     NamespaceReader
@@ -137,7 +137,7 @@ class ArgsTrashReader(NamespaceReader):
             '--restore', dest='restore_from_trash',
             nargs='+', help='Restore files from trash')
 
-    def add_config_flags(self):
+    def add_modes(self):
         self.parser.add_argument(
             '--config', dest='config_file_path', action='store',
             help='Path to configuration file for this launch')
@@ -164,12 +164,12 @@ class ArgsTrashReader(NamespaceReader):
     def set_from_parse_args(self, list_to_parse=sys.argv[1:]):
         args = self.parser.parse_args(list_to_parse)
 
-        if args.restore:
+        if args.restore_from_trash:
             self.namespace.modes["restore"] = True
             self.namespace.path_to["restore"] = args.restore
-        if args.clean:
+        if args.clear_trash:
             self.namespace.modes["clean"] = True
-        if args.display:
+        if args.view_trash_content:
             self.namespace.modes["display"] = True
 
         if args.silent_mode:
@@ -185,7 +185,7 @@ class ArgsTrashReader(NamespaceReader):
         self.log_level = args.log_level
 
     def get_namespace(self):
-        self.set_namespace_from_parse_args()
+        self.set_from_parse_args()
         return self.namespace
 
 # if silent then force!

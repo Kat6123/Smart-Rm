@@ -31,7 +31,7 @@ class SmartRemoveNamespace(Namespace):
 
         self.modes = {
             "not_confirm_rm": False,
-            "confirm_if_file_not_write_access": True,
+            "confirm_rm_if_no_write_access": True,
             "confirm_rm": False,
 
             "silent": False,

@@ -1,24 +1,25 @@
 # -*- coding: utf-8 -*-
 import ConfigParser
 import os.path
-from smart_rm.core import SystemError
-from smart_rm.core import Mover
+from smart_rm.core.error import SystemError
+from smart_rm.core.mover import Mover
 from smart_rm.core.remove import (
     remove_directory_content,
     remove_file
 )
 from smart_rm.utils import (
-    DEFAULT_TRASH_LOCATION,
+    TRASH_LOCATION,
     OLD_PATH_OPTION,
     INFO_SECTION,
-    INFO_FILE_EXPANSION
+    INFO_FILE_EXPANSION,
+    get_trash_files_and_info_paths
 )
 
 
 class TrashCan(object):
     def __init__(
         self,
-        trash_location=DEFAULT_TRASH_LOCATION,
+        trash_location=TRASH_LOCATION,
         mover=None
     ):
         self.trash_files_location, self.trash_info_location = (
@@ -66,7 +67,7 @@ class TrashCan(object):
 class AdvancedTrashCan(object):
     def __init__(
         self,
-        trash_location=DEFAULT_TRASH_LOCATION,
+        trash_location=TRASH_LOCATION,
         # clean_trash_politic="",
         check_hash=False,
         # dry_run=False

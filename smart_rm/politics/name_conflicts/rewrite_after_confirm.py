@@ -12,7 +12,7 @@ class MoveAndRewriteSamenameFilesWithAsking(Mover):
             path, destination
         )
 
-        if self.exists:
+        if self.already_exists:
             self.answer = raw_input(
                 "Do you want to rewrite {0} in {1}"
                 "".format(basename(path), destination)
@@ -21,7 +21,7 @@ class MoveAndRewriteSamenameFilesWithAsking(Mover):
         #     return
 
     def _do(self):
-        if self.exists:
+        if self.already_exists:
             if self.answer:     # Change
                 MoveAndRewriteIfSamenameFilesWithoutAsking().execute(
                     self.source,

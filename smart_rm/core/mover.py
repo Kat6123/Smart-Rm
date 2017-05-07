@@ -3,13 +3,15 @@ import errno
 import os
 import os.path
 import stat
-from error import (
+from smart_rm.core.error import (
     AccessError,
-    ExistError,
     SystemError
 )
-from remove import (
+from smart_rm.core.remove import (
     move_tree
+)
+from smart_rm.utils.check import (
+    check_path_existance
 )
 
 
@@ -77,8 +79,8 @@ class Mover(DryRunMixin):           # shutil.move to directory
         return self.final_path
 
     def tune_paths(self, source, destination):
-        self.source = os.path.abspath(source)
-        self.destination = os.path.abspath(destination)
+        self.source = os.path.abspath(os.path.expanduser(source))
+        self.destination = os.path.abspath(os.path.expanduser(destination))
         self.final_path = (
             os.path.join(
                 self.destination,

@@ -7,7 +7,7 @@ class MoveAndAskNewNameForMovableObject(Mover):
             path,
             destination
         )
-        if self.exists:
+        if self.already_exists:
             new_name = raw_input("Enter new name for {0}:".format(path))
             if new_name:
                 self.final_path = join(self.destination, new_name)

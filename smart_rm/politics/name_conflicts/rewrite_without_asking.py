@@ -8,11 +8,11 @@ class MoveAndRewriteIfSamenameFilesWithoutAsking(Mover):
             source, destination
         )
 
-        if self.exists:
+        if self.already_exists:
             pass
 
     def _do(self):
-        if self.exists:             # TODO: CHANGE!
+        if self.already_exists:             # TODO: CHANGE!
             with open(self.final_path, "w") as target:
                 with open(self.source, "r") as path:
                     target.write(path.read())

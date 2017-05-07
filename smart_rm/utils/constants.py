@@ -14,8 +14,9 @@ INFO_FILE_EXPANSION = ".trashinfo"
 
 TRASH_LOCATION = "~/.local/share/trash"
 LOG_FILE_LOCATION = "/var/log/smart_rm.log"
-APP_DIRECTORY = "~/.smart_rm"
+APP_DIRECTORY = "~/.smart_remove"
 DEFAULT_CONFIG_NAME = "config.cfg"
+PATH_TO_COPY_DEFAULT_CONFIG = "config/configuration"
 
 SM_REMOVE_SOLVE_NAME_CONFLICT = "MoveAndMakeNewNameDependingOnAmount"
 TRASH_SOLVE_NAME_CONFLICT = "MoveAndAskNewNameForMovableObject"
