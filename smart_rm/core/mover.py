@@ -13,6 +13,9 @@ from smart_rm.core.remove import (
 from smart_rm.utils.check import (
     check_path_existance
 )
+from smart_rm.utils.constants import (
+    ROOT
+)
 
 
 class DryRunMixin(object):
@@ -34,18 +37,21 @@ class DryRunMixin(object):
 
 
 class Mover(DryRunMixin):           # shutil.move to directory
+    special_file_modes = [
+        stat.S_ISBLK, stat.S_ISCHR,
+        stat.S_ISFIFO, stat.S_ISSOCK
+    ]
+
+    root_inners = [
+        os.path.abspath(root_inner) for root_inner in os.listdir(ROOT)
+    ]
+    special_directories = root_inner.append(ROOT)
+
     def __init__(self, dry_run=False):
         super(Mover, self).__init__(dry_run)
 
-        self.source, self.destination, self.final_path = None, None, None   # ?
+        self.source = self.destination = self.final_path = ""
         self.already_exists = False
-
-        self._special_file_modes = [
-            stat.S_ISBLK, stat.S_ISCHR,
-            stat.S_ISFIFO, stat.S_ISSOCK
-        ]
-        sys = ["/" + path for path in os.listdir("/")]
-        self._special_directories = ["/"] + sys
 
     def _watch(self, source, destination):
         self.tune_paths(source, destination)
@@ -79,8 +85,8 @@ class Mover(DryRunMixin):           # shutil.move to directory
         return self.final_path
 
     def tune_paths(self, source, destination):
-        self.source = os.path.abspath(os.path.expanduser(source))
-        self.destination = os.path.abspath(os.path.expanduser(destination))
+        self.source = source
+        self.destination = destination
         self.final_path = (
             os.path.join(
                 self.destination,
@@ -104,7 +110,7 @@ class Mover(DryRunMixin):           # shutil.move to directory
     def check_special_file(self):
         if os.getuid:                      # Explain!
             mode = os.stat(self.source).st_mode
-            for special_mode in self._special_file_modes:
+            for special_mode in self.special_file_modes:
                 if special_mode(mode):  # TODO: different types
                     raise AccessError(
                         errno.EACCES, "Not regular file", self.source
@@ -112,7 +118,7 @@ class Mover(DryRunMixin):           # shutil.move to directory
 
     def check_system_directory(self):
         if os.getuid:
-            for special_directory in self._special_directories:
+            for special_directory in self.special_directories:
                 if self.source == special_directory:
                     raise AccessError(
                         errno.EACCES, "System directory", self.source
