@@ -11,7 +11,6 @@ setuptools.setup(
     ).read(),
     include_package_data=True,
     test_suite="test",
-    install_requires=['argparse'],
     entry_points={
         'console_scripts': [
             'smart_rm = smart_rm.smart_rm_main:main',

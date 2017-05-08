@@ -1,5 +1,0 @@
-config
-core
-log
-politics
-utils

@@ -49,7 +49,7 @@ class TrashCan(object):
         ):
             remove_file(
                 os.path.join(
-                    self.trash_files_location, path_basename
+                    self.trash_info_location, path_basename
                     + INFO_FILE_EXPANSION
                 )
             )
@@ -57,15 +57,12 @@ class TrashCan(object):
     def _check_hash(self):
         pass
 
-    def clear_trash(files_location, info_location):
-        remove_directory_content(files_location)
-        remove_directory_content(info_location)
+    def clear_trash(self):
+        remove_directory_content(self.trash_files_location)
+        remove_directory_content(self.trash_info_location)
 
     def view_content(self):
-        pass
-    #     subprocess.call("cat {0}".format(
-    #         "".join(os.listdir(self.trash_location)))
-    #     )
+        subprocess.call(["ls", self.trash_location])
 
 
 class AdvancedTrashCan(object):
@@ -86,8 +83,8 @@ class AdvancedTrashCan(object):
             #     name_conflicts, solve_samename_files_politic)(dry_run=dry_ru
         )
 
-    # def clean(self):
-    #     self.trash.clear_trash()
+    def clean(self):
+        self.trash.clear_trash()
 
     def restore_files(self, paths):
         for path in paths:

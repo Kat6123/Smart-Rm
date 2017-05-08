@@ -43,10 +43,6 @@ class TrashInfo(object):
 
         self.trash_info_location = trash_info_location
 
-        # self.trashinfo_config.set(INFO_SECTION, OLD_PATH_OPTION)
-        # self.trashinfo_config.set(INFO_SECTION, REMOVE_DATE_OPTION)
-        # self.trashinfo_config.set(INFO_SECTION, FILE_HASH_OPTION)
-
     def write(self, old_path, path_in_trash):
         trashinfo_file = os.path.join(
             self.trash_info_location,

@@ -36,7 +36,7 @@ def remove_link(path):
 
 
 def remove_directory_content(directory):
-    content = os.path.listdir(directory)
+    content = os.listdir(directory)
     for path in content:
         abs_path = os.path.join(directory, path)
         if os.path.islink(abs_path):
@@ -44,7 +44,7 @@ def remove_directory_content(directory):
         elif os.path.isfile(abs_path):
             remove_file(abs_path)
         else:
-            os.path.remove_tree(abs_path)
+            remove_tree(abs_path)
 
 
 def move_tree(src, dst):

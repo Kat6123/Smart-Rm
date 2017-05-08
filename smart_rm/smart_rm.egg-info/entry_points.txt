@@ -1,4 +1,0 @@
-[console_scripts]
-smart_rm = smart_rm.smart_rm_main:main
-trash = smart_rm.trash_main:main
-
