@@ -1,18 +1,25 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 from logging import (
-    INFO,
-    DEBUG,
     getLogger,
     Formatter,
     StreamHandler,
     FileHandler
 )
 
+LOG_LEVELS = {
+    "critical": 50,
+    "error": 40,
+    "warning": 30,
+    "info": 20,
+    "debug": 10,
+    "notset": 0
+}
+
 
 def tune_logger(
         format=u'%(levelname)-8s [%(asctime)s] %(message)s',
-        log_level=DEBUG,     # TODO: make INFO
+        log_level="warning",
         write_to_stderr=True,
         logfile_path=""
 ):
@@ -26,7 +33,7 @@ def tune_logger(
     It is possible to set own format and log level.
     """
     root_logger = getLogger()
-    root_logger.setLevel(log_level)
+    root_logger.setLevel(LOG_LEVELS[log_level])
     formatter = Formatter(format)
 
     if write_to_stderr or logfile_path:

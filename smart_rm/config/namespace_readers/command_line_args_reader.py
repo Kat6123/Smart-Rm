@@ -165,15 +165,15 @@ class ArgsTrashReader(NamespaceReader):
         args = self.parser.parse_args(list_to_parse)
 
         if args.restore_from_trash:
-            self.namespace.modes["restore"] = True
-            self.namespace.path_to["restore"] = args.restore
+            self.namespace.actions["restore"] = True
+            self.namespace.path_to["restore"] = args.restore_from_trash
         if args.clear_trash:
-            self.namespace.modes["clean"] = True
+            self.namespace.actions["clean"] = True
         if args.view_trash_content:
             self.namespace.modes["display"] = True
 
         if args.silent_mode:
-            self.namespace.modes["silent"] = True
+            self.namespace.actions["silent"] = True
         if args.imitation:
             self.namespace.modes["dry_run"] = True
         if args.check_hash:

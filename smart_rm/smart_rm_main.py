@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 from smart_rm.core.smart_remove import AdvancedRemover
 from smart_rm.config.namespace import SmartRemoveNamespace
-from smart_rm.config.readers.command_line_args_reader import ArgsRemoveReader
+from smart_rm.config.namespace_readers.command_line_args_reader import (
+    ArgsRemoveReader
+)
 from smart_rm.log.logger import tune_logger
 from smart_rm.utils import make_app_folder_if_not_exist
 

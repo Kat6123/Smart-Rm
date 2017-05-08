@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-import errno
 import os
 import os.path
-from smart_rm.core.error import ModeError
 
 
 def ask_if_file_has_not_write_access(path):
@@ -25,15 +23,3 @@ def ask_remove(path, special_info=""):
     )
     if answer == 'y':
         return True
-
-
-def verify_file_removal(file):
-    if not os.path.isfile(file):
-        raise ModeError(errno.EISDIR, os.strerror(errno.EISDIR), file)
-
-
-def verify_directory_removal(directory):
-    if os.path.isdir(directory) and os.path.listdir(directory):
-        raise ModeError(
-            errno.ENOTEMPTY, os.strerror(errno.ENOTEMPTY), directory
-        )

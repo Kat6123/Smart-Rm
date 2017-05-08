@@ -1,65 +1,58 @@
 # -*- coding: utf-8 -*-
-from os import (
-    remove,
-    rmdir,
-    listdir,
-    unlink
-)
-from os.path import (
-    join,
-    islink,
-    isfile
-)
-from shutil import (
-    rmtree,
-    move,
-    Error
-)
-from error import SystemError
+import logging
+import os
+import os.path
+import shutil
+
+from smart_rm.core.error import SystemError
 
 
 def remove_file(path):
     try:
-        remove(path)
+        os.remove(path)
     except OSError as error:
         raise SystemError(error.errno, error.strerror, error.filename)
 
 
 def remove_dir(path):
     try:
-        rmdir(path)
+        os.rmdir(path)
     except OSError as error:
         raise SystemError(error.errno, error.strerror, error.filename)
 
 
 def remove_tree(path):
     try:
-        rmtree(path)
-    except Error as error:
+        shutil.rmtree(path)
+    except (shutil.Error, OSError) as error:
         raise SystemError(error)
 
 
 def remove_link(path):
     try:
-        unlink(path)
+        os.unlink(path)
     except OSError as error:
         raise SystemError(error.errno, error.strerror, error.filename)
 
 
 def remove_directory_content(directory):
-    content = listdir(directory)
+    content = os.path.listdir(directory)
     for path in content:
-        abs_path = join(directory, path)
-        if islink(abs_path):
+        abs_path = os.path.join(directory, path)
+        if os.path.islink(abs_path):
             remove_link(abs_path)
-        elif isfile(abs_path):
+        elif os.path.isfile(abs_path):
             remove_file(abs_path)
         else:
-            remove_tree(abs_path)
+            os.path.remove_tree(abs_path)
 
 
 def move_tree(src, dst):
+    logging.info("Try move {0} to {1}".format(src, dst))
+
     try:
-        move(src, dst)
-    except Error as error:
+        shutil.move(src, dst)
+    except (shutil.Error, OSError) as error:
         raise SystemError(error.errno, error.strerror, error.filename)
+
+    logging.info("Moved")

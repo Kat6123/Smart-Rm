@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 from smart_rm.core.trash_can import AdvancedTrashCan
 from smart_rm.config.namespace import TrashNamespace
-from smart_rm.config.readers.command_line_args_reader import ArgsTrashReader
+from smart_rm.config.namespace_readers.command_line_args_reader import (
+    ArgsTrashReader
+)
 from smart_rm.log.logger import tune_logger
 from smart_rm.utils import make_app_folder_if_not_exist
 
@@ -43,9 +45,9 @@ def main():
 
     if namespace.actions["display"]:
         trash.view_content()
-    elif namespace.actions["restore"]:
-        trash.restore_files(namespace.path_to["remove"])
-    elif namespace.actions["clean"]:
+    if namespace.actions["restore"]:
+        trash.restore_files(namespace.path_to["restore"])
+    if namespace.actions["clean"]:
         trash.clean()
 
 
