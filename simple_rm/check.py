@@ -5,9 +5,7 @@ import re
 import shutil
 import stat
 
-from simple_rm.constants import *     # XXX:
-from simple_rm.error import *
-
+import simple_rm.constants as const
 
 special_file_modes = [
     stat.S_ISBLK, stat.S_ISCHR,
@@ -15,12 +13,14 @@ special_file_modes = [
 ]
 
 special_directories = [
-    os.path.join(ROOT, root_inner) for root_inner in os.listdir(ROOT)
-] + [ROOT]
+    os.path.join(const.ROOT, root_inner) for root_inner in os.listdir(
+        const.ROOT
+    )
+] + [const.ROOT]
 
 
 def make_app_folder_if_not_exist():
-    app = os.path.expanduser(APP_DIRECTORY)
+    app = os.path.expanduser(const.APP_DIRECTORY)
     if not os.path.exists(app):
         try:
             os.mkdir(app)
@@ -41,14 +41,14 @@ def make_trash_if_not_exist(trash_location):
 
 def get_path_in_trash(path, trash_location):
     return os.path.join(
-        trash_location, TRASH_FILES_DIRECTORY, os.path.basename(path)
+        trash_location, const.TRASH_FILES_DIRECTORY, os.path.basename(path)
     )
 
 
 def get_path_in_trash_info(path, trash_location):
     return os.path.join(
-        trash_location, TRASH_INFO_DIRECTORY,
-        os.path.basename(path) + INFO_FILE_EXPANSION
+        trash_location, const.TRASH_INFO_DIRECTORY,
+        os.path.basename(path) + const.INFO_FILE_EXPANSION
     )
 
 
@@ -57,7 +57,7 @@ def get_correct_path(path):
 
 
 def get_regex_matcher(regex):
-    regex = regex + END_OF_STRING
+    regex = regex + const.END_OF_STRING
 
     def match_path(path):
         matches = re.match(regex, os.path.basename(path))
@@ -68,8 +68,8 @@ def get_regex_matcher(regex):
 
 def get_trash_files_and_info_paths(trash_location):
     return (
-        os.path.join(trash_location, TRASH_FILES_DIRECTORY),
-        os.path.join(trash_location, TRASH_INFO_DIRECTORY)
+        os.path.join(trash_location, const.TRASH_FILES_DIRECTORY),
+        os.path.join(trash_location, const.TRASH_INFO_DIRECTORY)
     )
 
 
@@ -142,4 +142,8 @@ def check_system_directory(directory_path):
         if os.path.ismount(directory_path):
             return False
 
+    return True
+
+
+def return_true(x):
     return True
