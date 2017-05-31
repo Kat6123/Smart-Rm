@@ -2,7 +2,6 @@
 # import logging
 import os
 import re
-import shutil
 import stat
 
 import simple_rm.constants as const
@@ -19,22 +18,18 @@ special_directories = [
 ] + [const.ROOT]
 
 
-def make_app_folder_if_not_exist():
-    app = os.path.expanduser(const.APP_DIRECTORY)
-    if not os.path.exists(app):
-        try:
-            os.mkdir(app)
-        except (OSError, shutil.Error) as error:
-            raise SystemError(error.errno, error.strerror, error.filename)
-
-
 def make_trash_if_not_exist(trash_location):
-    if not os.path.exists(trash_location):
+    create_not_exist_file(trash_location)
+    files, info = get_trash_files_and_info_paths(trash_location)
+
+    create_not_exist_file(files)
+    create_not_exist_file(info)
+
+
+def create_not_exist_file(path):
+    if not os.path.exists(path):
         try:
-            os.mkdir(trash_location)
-            files, info = get_trash_files_and_info_paths(trash_location)
-            os.mkdir(files)
-            os.mkdir(info)
+            os.mkdir(path)
         except OSError as error:
             raise SystemError(error.errno, error.strerror, error.filename)
 
