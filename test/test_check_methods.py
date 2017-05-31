@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
 import os.path
+import stat
 import shutil
 
+import simple_rm.constants as const
 from unittest import (
     TestCase,
     main
@@ -13,8 +15,20 @@ from simple_rm.check import (
     check_path_existance,
     check_path_is_not_tree,
     check_directory_access,
-    check_parent_read_rights
+    check_parent_read_rights,
+    check_system_directory,
+    check_special_file,
+    return_true
 )
+
+
+def set_rights(rights):
+    def inner():
+        if rights == "root":
+            return 0
+        else:
+            return 1
+    return inner
 
 
 class TestChecksWithoutOS(TestCase):
@@ -135,6 +149,52 @@ class TestChecksWithOS(TestCase):
 
         os.chmod(parent_directory, no_read_wright_execute_all)
         self.assertTrue(check_parent_read_rights(file_in_tree))
+
+    def test_check_special_directory(self):
+        special_directories = [
+            os.path.join(const.ROOT, root_inner) for root_inner in os.listdir(
+                const.ROOT
+            )
+        ] + [const.ROOT]
+
+        os.getuid = set_rights("root")
+        for directory in special_directories:
+            self.assertTrue(check_system_directory(directory))
+
+        os.path.ismount = return_true
+        self.assertTrue(check_system_directory("strange_path"))
+
+        os.getuid = set_rights("not_root")
+        for directory in special_directories:
+            self.assertFalse(check_system_directory(directory))
+
+        os.path.ismount = return_true
+        self.assertFalse(check_system_directory("strange_path"))
+
+    def test_check_special_file(self):
+        special_names = ["fifo", "socket"]
+        special_modes = [
+            stat.S_IFIFO,
+            stat.S_IFSOCK
+        ]
+        paths = []
+
+        for num in xrange(len(special_modes)):
+            path = os.path.join(
+                TestChecksWithOS.test_dir, special_names[num]
+            )
+            os.mknod(path, special_modes[num])
+            paths.append(path)
+
+        os.getuid = set_rights("root")
+        for path in paths:
+            self.assertTrue(check_special_file(path))
+        self.assertTrue(check_special_file(__file__))
+
+        os.getuid = set_rights("not_root")
+        for path in paths:
+            self.assertFalse(check_special_file(path))
+        self.assertTrue(check_special_file(__file__))
 
 
 if __name__ == '__main__':
