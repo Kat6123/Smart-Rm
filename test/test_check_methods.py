@@ -10,14 +10,16 @@ from unittest import (
     main
 )
 from simple_rm.check import (
-    check_path_is_file,
     check_cycle,
-    check_path_existance,
-    check_path_is_not_tree,
     check_directory_access,
     check_parent_read_rights,
-    check_system_directory,
+    check_path_existance,
+    check_path_is_file,
+    check_path_is_not_tree,
     check_special_file,
+    check_system_directory,
+    create_not_exist_file,
+    make_trash_if_not_exist,
     return_true
 )
 
@@ -195,6 +197,28 @@ class TestChecksWithOS(TestCase):
         for path in paths:
             self.assertFalse(check_special_file(path))
         self.assertTrue(check_special_file(__file__))
+
+    def test_create_if_not_exist(self):
+        test_path = os.path.join(TestChecksWithOS.test_dir, "create")
+
+        if os.path.exists(test_path):
+            shutil.rmtree(test_path)
+
+        self.assertFalse(os.path.exists(test_path))
+        create_not_exist_file(test_path)
+        self.assertTrue(os.path.exists(test_path))
+
+    def test_make_trash_if_not_exist(self):
+        trash = os.path.join(TestChecksWithOS.test_dir, "trash_loc")
+
+        make_trash_if_not_exist(trash)
+        self.assertTrue(os.path.exists(trash))
+
+        self.assertTrue(os.path.exists(
+            os.path.join(trash, const.TRASH_FILES_DIRECTORY)))
+
+        self.assertTrue(os.path.exists(
+            os.path.join(trash, const.TRASH_INFO_DIRECTORY)))
 
 
 if __name__ == '__main__':
