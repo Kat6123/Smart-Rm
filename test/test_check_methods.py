@@ -5,6 +5,7 @@ import stat
 import shutil
 
 import simple_rm.constants as const
+import test.constants as test_const
 from unittest import (
     TestCase,
     main
@@ -21,6 +22,13 @@ from simple_rm.check import (
     create_not_exist_file,
     make_trash_if_not_exist,
     return_true
+)
+from test.use_os import (
+    create_dir_in_dir,
+    create_empty_directory,
+    create_file_in_dir,
+    create_test_dir,
+    remove_test_dir
 )
 
 
@@ -59,35 +67,23 @@ class TestChecksWithoutOS(TestCase):
 
 
 class TestChecksWithOS(TestCase):
-    test_dir = "hope_this_test_directory_does_not_exist"
-
     @classmethod
     def setUpClass(cls):
-        os.mkdir(cls.test_dir)
+        create_test_dir()
 
     @classmethod
     def tearDownClass(cls):
-        os.chmod(TestChecksWithOS.test_dir, 0777)
-
-        for root, dirs, files in os.walk(TestChecksWithOS.test_dir):
-            for file_path in files:
-                os.chmod(os.path.join(root, file_path), 0777)
-
-            for dir_path in dirs:
-                os.chmod(os.path.join(root, dir_path), 0777)
-        shutil.rmtree(cls.test_dir)
+        remove_test_dir()
 
     def test_check_path_is_not_tree(self):
-        empty_directory = os.path.join(TestChecksWithOS.test_dir, "empty_dir")
-        os.mkdir(empty_directory)
+        empty_directory = create_empty_directory("empty_dir")
 
         self.assertTrue(check_path_is_not_tree(empty_directory))
         self.assertTrue(check_path_is_not_tree(__file__))
         self.assertFalse(check_path_is_not_tree(os.path.dirname(__file__)))
 
     def test_check_directory_access(self):
-        access_directory = os.path.join(TestChecksWithOS.test_dir, "acces_dir")
-        os.mkdir(access_directory)
+        access_directory = create_empty_directory("acces_dir")
 
         read_wright_execute_all = 0777
         read_wright_no_execute_all = 0666
@@ -111,40 +107,30 @@ class TestChecksWithOS(TestCase):
         self.assertTrue(check_directory_access(access_directory))
 
     def test_check_parent_read_rights(self):
-        parent_directory = os.path.join(
-            TestChecksWithOS.test_dir, "parent_dir"
-        )
-        os.mkdir(parent_directory)
+        parent_directory = create_empty_directory("parent_dir")
 
         read_wright_execute_all = 0777
         no_read_wright_execute_all = 0333
 
-        empty_dir = os.path.join(parent_directory, "empty")
-        os.mkdir(empty_dir)
+        test_paths = []
 
-        os.chmod(parent_directory, read_wright_execute_all)
-        self.assertTrue(check_parent_read_rights(empty_dir))
+        empty_dir = create_dir_in_dir("empty", parent_directory)
+        test_paths.append(empty_dir)
 
-        os.chmod(parent_directory, no_read_wright_execute_all)
-        self.assertFalse(check_parent_read_rights(empty_dir))
+        file_in_dir = create_file_in_dir("file", parent_directory)
+        test_paths.append(file_in_dir)
 
-        file_in_dir = os.path.join(parent_directory, "file")
-        with open(file_in_dir, "w"):
-            pass
-
-        os.chmod(parent_directory, read_wright_execute_all)
-        self.assertTrue(check_parent_read_rights(file_in_dir))
-
-        os.chmod(parent_directory, no_read_wright_execute_all)
-        self.assertFalse(check_parent_read_rights(file_in_dir))
-
-        tree_dir = os.path.join(parent_directory, "tree")
-        os.mkdir(tree_dir)
-        file_in_tree = os.path.join(tree_dir, "file_in_tree")
-        with open(file_in_tree, "w"):
-            pass
-
+        tree_dir = create_dir_in_dir("tree", parent_directory)
+        file_in_tree = create_file_in_dir("file", tree_dir)
+        test_paths.append(tree_dir)
         os.chmod(tree_dir, read_wright_execute_all)
+
+        for path in test_paths:
+            os.chmod(parent_directory, read_wright_execute_all)
+            self.assertTrue(check_parent_read_rights(path))
+
+            os.chmod(parent_directory, no_read_wright_execute_all)
+            self.assertFalse(check_parent_read_rights(path))
 
         os.chmod(parent_directory, read_wright_execute_all)
         self.assertTrue(check_parent_read_rights(file_in_tree))
@@ -183,7 +169,7 @@ class TestChecksWithOS(TestCase):
 
         for num in xrange(len(special_modes)):
             path = os.path.join(
-                TestChecksWithOS.test_dir, special_names[num]
+                test_const.TEST_DIR, special_names[num]
             )
             os.mknod(path, special_modes[num])
             paths.append(path)
@@ -199,7 +185,7 @@ class TestChecksWithOS(TestCase):
         self.assertTrue(check_special_file(__file__))
 
     def test_create_if_not_exist(self):
-        test_path = os.path.join(TestChecksWithOS.test_dir, "create")
+        test_path = create_empty_directory("create")
 
         if os.path.exists(test_path):
             shutil.rmtree(test_path)
@@ -209,7 +195,7 @@ class TestChecksWithOS(TestCase):
         self.assertTrue(os.path.exists(test_path))
 
     def test_make_trash_if_not_exist(self):
-        trash = os.path.join(TestChecksWithOS.test_dir, "trash_loc")
+        trash = create_empty_directory("trash_loc")
 
         make_trash_if_not_exist(trash)
         self.assertTrue(os.path.exists(trash))
