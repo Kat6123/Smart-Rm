@@ -31,7 +31,7 @@ def create_not_exist_file(path):
         try:
             os.mkdir(path)
         except OSError as error:
-            raise SystemError(error.errno, error.strerror, error.filename)
+            raise SysError(error.errno, error.strerror, error.filename)
 
 
 def get_path_in_trash(path, trash_location):

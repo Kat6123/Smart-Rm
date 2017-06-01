@@ -30,7 +30,8 @@ from simple_rm.error import (
     AccessError,
     ExistError,
     ModeError,
-    SmartError
+    SmartError,
+    SysError
 )
 
 
@@ -198,7 +199,7 @@ class Trash(object):
                     # if (clean.get_size(self.trash_location) + info_object.size
                     #         > self.max_size):
                     #     info_object.errors.append(
-                    #         SystemError("File is too large")
+                    #         SysError("File is too large")
                     #     )
 
                     if not info_object.errors:
@@ -250,7 +251,7 @@ class Trash(object):
                     os.remove(path_in_info)
             except (shutil.Error, OSError) as error:
                 path_info_object.errors.append(
-                    SystemError(error.errno, error.strerror, error.filename)
+                    SysError(error.errno, error.strerror, error.filename)
                 )
 
             result_info_objects.append(path_info_object)
@@ -315,7 +316,7 @@ class Trash(object):
 
     def _run_access_checks(self, source, destination):
         if not check_path_is_directory(destination):
-            raise SystemError(
+            raise SysError(
                 "Distance \"{0}\" is not directory"
                 "".format(os.path.basename(destination))
             )
@@ -359,7 +360,7 @@ class Trash(object):
             )
 
         if not check_cycle(source, destination):
-            raise SystemError(
+            raise SysError(
                 "Cannot move \"{0}\" into itself \"{1}\""
                 "".format(source, destination)
             )       # Add check same name exists
@@ -409,7 +410,7 @@ class Trash(object):
             )
         except (shutil.Error, OSError) as error:
             info_object.errors.append(
-                SystemError(error.errno, error.strerror, error.filename)
+                SysError(error.errno, error.strerror, error.filename)
             )
 
     def _time_clean_automatically(self):

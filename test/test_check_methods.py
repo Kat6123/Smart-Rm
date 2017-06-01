@@ -28,17 +28,9 @@ from test.use_os import (
     create_empty_directory,
     create_file_in_dir,
     create_test_dir,
+    set_rights,
     remove_test_dir
 )
-
-
-def set_rights(rights):
-    def inner():
-        if rights == "root":
-            return 0
-        else:
-            return 1
-    return inner
 
 
 class TestChecksWithoutOS(TestCase):

@@ -16,7 +16,7 @@ def ask_new_name(info_obj):
         info_obj.path_in_trash = new_path
     else:
         info_obj.errors.append(
-            SystemError("Already exists {0}".format(info_obj.path_in_trash))
+            SysError("Already exists {0}".format(info_obj.path_in_trash))
         )
 
 
@@ -36,7 +36,7 @@ def give_new_name_depending_on_same_amount(info_obj):
 
 def skip(info_obj):
     info_obj.errors.append(
-        SystemError("Already exists {0}".format(info_obj.path_in_trash))
+        SysError("Already exists {0}".format(info_obj.path_in_trash))
     )
 
 
@@ -57,5 +57,5 @@ def confirm_and_replace(info_obj):
         )
     else:
         info_obj.errors.append(
-            SystemError("Already exists {0}".format(info_obj.path_in_trash))
+            SysError("Already exists {0}".format(info_obj.path_in_trash))
         )

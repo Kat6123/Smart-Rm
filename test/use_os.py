@@ -22,6 +22,18 @@ def remove_test_dir():
     shutil.rmtree(const.TEST_DIR)
 
 
+def remove_dir(dir_path):
+    os.chmod(dir_path, 0777)
+
+    for root, dirs, files in os.walk(dir_path):
+        for file_path in files:
+            os.chmod(os.path.join(root, file_path), 0777)
+
+        for directory in dirs:
+            os.chmod(os.path.join(root, directory), 0777)
+    shutil.rmtree(dir_path)
+
+
 def create_file_in_dir(file_name, dir_path):
     path = os.path.join(dir_path, file_name)
     with open(path, "w"):
@@ -71,3 +83,12 @@ def names_for_trash_files_info_in_dir(directory):
     info = os.path.join(trash, sm_const.TRASH_INFO_DIRECTORY)
 
     return trash, files, info
+
+
+def set_rights(rights):
+    def inner():
+        if rights == "root":
+            return 0
+        else:
+            return 1
+    return inner

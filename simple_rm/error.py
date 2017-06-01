@@ -17,5 +17,5 @@ class ModeError(SmartError):
     pass
 
 
-class SystemError(SmartError):
+class SysError(SmartError):
     pass
