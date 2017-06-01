@@ -38,5 +38,6 @@ DEFAULT_CLEAN_POLICY = "remove_all"
 MAX_TRASH_SIZE_IN_BYTES = 2 ** 30
 MAX_TIME_IN_TRASH = "12 months 1 days 1 hours 1 minutes"
 CLEAN_POLICY_TEMPLATE = "get_object_list_by_{0}_policy"
+CLEAN_POLICY_VALIDATION_TEMPLATE = "get_valid_clean_parametr_by_{0}_policy"
 
 SOLVE_NAME_CONFLICT_POLICY = "give_new_name_depending_on_same_amount"
