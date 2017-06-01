@@ -3,6 +3,7 @@ import os
 import shutil
 
 import test.constants as const
+import simple_rm.constants as sm_const
 
 
 def create_test_dir():
@@ -54,3 +55,19 @@ def create_empty_directory(directory_name):
 
 def create_tree(tree_name):
     return create_tree_in_dir(tree_name, const.TEST_DIR)
+
+
+def create_file_dir_tree_in_directory(dir_path):
+    file_path = create_file_in_dir("file", dir_path)
+    directory_path = create_dir_in_dir("dir", dir_path)
+    tree_path = create_tree_in_dir("tree", dir_path)
+
+    return file_path, directory_path, tree_path
+
+
+def names_for_trash_files_info_in_dir(directory):
+    trash = os.path.join(directory, "trash")
+    files = os.path.join(trash, sm_const.TRASH_FILES_DIRECTORY)
+    info = os.path.join(trash, sm_const.TRASH_INFO_DIRECTORY)
+
+    return trash, files, info
