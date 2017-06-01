@@ -40,8 +40,8 @@ class TrashInfo(object):
         self.path_in_trash = get_path_in_trash(path, trash_location)
 
         self.deletion_date = datetime.datetime.today()
-        self.sha256_value = hashlib.sha256(self.initial_path).hexdigest()
-        self.size = clean.get_size(self.initial_path)
+        self.sha256_value = 0
+        self.size = 0
 
         self.errors = []
 
@@ -66,9 +66,13 @@ class TrashInfo(object):
             const.INFO_SECTION, const.REMOVE_DATE_OPTION,
             self.deletion_date.strftime(const.DATE_FORMAT)
         )
+
+        self.sha256_value = hashlib.sha256(self.initial_path).hexdigest()
         config_parser.set(
             const.INFO_SECTION, const.FILE_HASH_OPTION, self.sha256_value
         )
+
+        self.size = clean.get_size(self.initial_path)
         config_parser.set(
             const.INFO_SECTION, const.SIZE_OPTION, self.size
         )
@@ -123,7 +127,11 @@ class Trash(object):
         else:
             self.remove_mode = const.REMOVE_FILE_MODE
 
-        self.confirm_removal = confirm_removal
+        if callable(confirm_removal):
+            self.confirm_removal = confirm_removal
+        else:
+            self.confirm_removal = return_true
+
         self.dry_run = dry_run
 
         self.clean_policy = clean_policy
@@ -138,10 +146,10 @@ class Trash(object):
         self._trashinfo_config.add_section(const.INFO_SECTION)
 
     def remove(self, paths_to_remove, regex=None):
-        self._time_clean_automatically()            # XXX ?
+        make_trash_if_not_exist(self.trash_location)
+        # self._time_clean_automatically()            # XXX ?
 
         result_info_objects = []
-
         regex_matcher = return_true
         if regex:
             regex_matcher = get_regex_matcher(regex)
@@ -149,7 +157,6 @@ class Trash(object):
         for path in paths_to_remove:
             path_info_object = TrashInfo(path, self.trash_location)
             correct_path = path_info_object.initial_path
-
             try:
                 self._run_remove_checks(correct_path, self.trash_location)
             except SmartError as error:
@@ -183,21 +190,22 @@ class Trash(object):
                         method_to_solve = getattr(solve, self.conflict_policy)
                         method_to_solve(info_object)
 
-                    future_size = self.max_size - info_object.size
-                    self.clean(
-                        clean_policy="size_time",
-                        clean_parametr=future_size
-                    )
-                    if (clean.get_size(self.trash_location) + info_object.size
-                            > self.max_size):
-                        info_object.errors.append(
-                            SystemError("File is too large")
-                        )
+                    # future_size = self.max_size - info_object.size
+                    # self.clean(
+                    #     clean_policy="size_time",
+                    #     clean_parametr=future_size
+                    # )
+                    # if (clean.get_size(self.trash_location) + info_object.size
+                    #         > self.max_size):
+                    #     info_object.errors.append(
+                    #         SystemError("File is too large")
+                    #     )
 
                     if not info_object.errors:
                         self._smart_remove(info_object)
 
-                result_info_objects.append(path_info_object)
+                # result_info_objects.append(path_info_object)
+                result_info_objects.append(info_object)
 
         return result_info_objects
 
@@ -279,15 +287,25 @@ class Trash(object):
                 clean,
                 const.CLEAN_POLICY_TEMPLATE.format(clean_policy)
             )
+            valid_clean_parametr = getattr(
+                clean,
+                const.CLEAN_POLICY_VALIDATION_TEMPLATE.format(clean_policy)
+            )(clean_parametr)
         except AttributeError:
             get_remove_objects_function = getattr(
                 clean, const.CLEAN_POLICY_TEMPLATE.format(
                     const.DEFAULT_CLEAN_POLICY
                 )
             )
+            valid_clean_parametr = getattr(
+                clean,
+                const.CLEAN_POLICY_VALIDATION_TEMPLATE.format(
+                    const.DEFAULT_CLEAN_POLICY
+                )
+            )(clean_parametr)
 
         objects_for_remove = get_remove_objects_function(
-            objects_in_trash, clean_parametr
+            objects_in_trash, valid_clean_parametr
         )
         if not self.dry_run:
             for obj in objects_in_trash:
@@ -355,13 +373,11 @@ class Trash(object):
         items_to_remove = []
 
         for root, dirs, files in os.walk(correct_path, topdown=False):
-            items_in_root_to_remove = []
-
             for file_path in files:
                 if (regex_matcher(file_path) and
                         self.confirm_removal(file_path)):
                     abs_path = os.path.join(root, os.path.basename(file_path))
-                    items_in_root_to_remove.append(abs_path)
+                    items_to_remove.append(abs_path)
 
             if regex_matcher(root) and self.confirm_removal(root):
                 root_inners = [
@@ -369,16 +385,13 @@ class Trash(object):
                     file_path in os.listdir(root)
                 ]
 
-                if (set(root_inners).issubset(items_in_root_to_remove)):
+                if len(root_inners) == 0:
+                    items_to_remove.append(root)
+                elif (set(root_inners).issubset(items_to_remove)):
                     items_to_remove = list(
                         set(items_to_remove) - set(root_inners)
                     )
                     items_to_remove.append(root)
-                else:
-                    items_to_remove.extend(items_in_root_to_remove)
-                    break
-            else:
-                items_to_remove.extend(items_in_root_to_remove)
 
         return items_to_remove
 
@@ -390,7 +403,6 @@ class Trash(object):
             info_object.write_info_with_config(
                 trashinfo_path, self._trashinfo_config
             )
-
             shutil.move(
                 info_object.initial_path,
                 info_object.path_in_trash
