@@ -11,6 +11,7 @@ from unittest import (
 
 import test.constants as test_const
 import simple_rm.error as errors
+from simple_rm.check import get_regex_matcher
 from simple_rm.trash import Trash
 from test.use_os import (
     create_dir_in_dir,
@@ -253,6 +254,115 @@ class TestTrash(TestCase):
                     raise error
             ex = info.exception
             self.assertTrue(ex.errno, errno.EACCES)
+
+    def test_file_regex(self):
+        regex_dir = create_empty_directory("regex")
+        file_template = "file.*"
+        file_names = [
+            "file.py",
+            "file$",
+            "file$$",
+            "file1231321",
+            r"\file1",
+            "abracadabra",
+            "lalal"
+        ]
+
+        file_re = get_regex_matcher(file_template)
+        regex_paths = []
+        file_paths = []
+
+        for name in file_names:
+            path = create_file_in_dir(name, regex_dir)
+            file_paths.append(path)
+            if file_re(name):
+                regex_paths.append(os.path.abspath(path))
+
+        removed = self.trash.remove(file_paths, regex=file_template)
+        for rm in removed:
+            self.assertIn(rm.initial_path, regex_paths)
+
+    def test_dir_regex(self):
+        regex_dir = create_empty_directory("regex_dir")
+        dir_template = ".+dir123"
+        dir_names = [
+            "dir123",
+            "ajdhadir123",
+            "asjdhsjdir123skjfhkds",
+            r"$$$$$dir123",
+            "$$dir123",
+            "abr"
+        ]
+
+        dir_re = get_regex_matcher(dir_template)
+        regex_paths = []
+        dir_paths = []
+
+        for name in dir_names:
+            path = create_dir_in_dir(name, regex_dir)
+            dir_paths.append(path)
+            if dir_re(name):
+                regex_paths.append(os.path.abspath(path))
+
+        self.trash.remove_mode = const.REMOVE_EMPTY_DIRECTORY_MODE
+        removed = self.trash.remove(dir_paths, regex=dir_template)
+        for rm in removed:
+            self.assertIn(rm.initial_path, regex_paths)
+
+    def test_all_tree_elem_match_regex(self):
+        regex_dir = create_empty_directory("regex_tree_dir")
+        all_tree_elem_match_regex_template = r"\d*tree.*"
+        all_tree_elem_match_regex = create_dir_in_dir(
+            "121212treeadadas", regex_dir
+        )
+        create_file_in_dir("436757treejhj", all_tree_elem_match_regex)
+        create_file_in_dir("566887treekjhkj", all_tree_elem_match_regex)
+        dir_in_all_tree_elem_match_regex = create_dir_in_dir(
+            "767868treeoj9", all_tree_elem_match_regex
+        )
+        create_file_in_dir("12treeadad", dir_in_all_tree_elem_match_regex)
+
+        self.trash.remove_mode = const.REMOVE_TREE_MODE
+        res = self.trash.remove(
+            [all_tree_elem_match_regex],
+            regex=all_tree_elem_match_regex_template
+        )
+        self.assertEqual(len(res), 1)
+        self.assertEqual(
+            res[0].initial_path, os.path.abspath(all_tree_elem_match_regex)
+        )
+
+    def test_tree_match_rehex_partially(self):
+        regex_dir = create_empty_directory("regex_tree_part")
+        paths = []
+        regex_paths = []
+        tree_template = r"4+part.*"
+        matcher = get_regex_matcher(tree_template)
+
+        tree = create_dir_in_dir(
+            "444part098765", regex_dir
+        )
+        file1_in_tree = create_file_in_dir("444partads", tree)
+        file2_in_tree = create_file_in_dir("partkasjd", tree)
+        dir_in_tree = create_dir_in_dir(
+            "hello", tree
+        )
+        file_in_dir_tree = create_file_in_dir("4444parthello", dir_in_tree)
+        paths = [
+            tree, file1_in_tree, file2_in_tree,
+            dir_in_tree, file_in_dir_tree
+        ]
+        for path in paths:
+            if matcher(path):
+                regex_paths.append(os.path.abspath(path))
+
+        self.trash.remove_mode = const.REMOVE_TREE_MODE
+        result = self.trash.remove(
+            [tree],
+            regex=tree_template
+        )
+        for res in result:
+            self.assertIn(res.initial_path, regex_paths)
 
 
 if __name__ == '__main__':
