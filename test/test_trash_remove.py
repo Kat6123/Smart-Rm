@@ -11,6 +11,7 @@ from unittest import (
 
 import test.constants as test_const
 import simple_rm.error as errors
+from test.test_trash import TestTrashMixin
 from simple_rm.check import get_regex_matcher
 from simple_rm.trash import Trash
 from test.use_os import (
@@ -26,26 +27,7 @@ from test.use_os import (
 )
 
 
-class TestTrash(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        create_test_dir()
-
-    @classmethod
-    def tearDownClass(cls):
-        remove_test_dir()
-
-    def setUp(self):
-        names = names_for_trash_files_info_in_dir(test_const.TEST_DIR)
-        self.trash_loc, self.files, self.info = names
-
-        self.trash = Trash(self.trash_loc)
-
-    def tearDown(self):
-        if os.path.exists(self.trash_loc):
-            remove_dir(self.trash_loc)
-        del self.trash, self.files, self.info, self.trash_loc
-
+class TestTrashRemove(TestTrashMixin, TestCase):
     def test_remove_file_mode(self):
         test_dir = create_empty_directory("file_mode")
         file_path, dir_path, tree_path = create_file_dir_tree_in_directory(
