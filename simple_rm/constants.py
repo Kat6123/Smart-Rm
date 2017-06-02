@@ -6,7 +6,7 @@ REMOVE_TREE_MODE = "tree"
 
 INTERACTIVE_MODE = "interactive"
 FORCE_MODE = "force"
-PAY_ATTENTION_IF_NOT_WRITE_ACCESS_MODE = "not_write_access"
+ATTENTION_IF_NOT_WRITE_ACCESS_MODE = "not_write_access"
 
 LOG_LEVEL = "warning"
 

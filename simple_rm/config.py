@@ -9,7 +9,7 @@ class Config(object):
     def __init__(self):
         self.remove = {
             "aim": const.REMOVE_FILE_MODE,
-            "mode": const.PAY_ATTENTION_IF_NOT_WRITE_ACCESS_MODE
+            "mode": const.ATTENTION_IF_NOT_WRITE_ACCESS_MODE
         }
 
         self.path_to = {
@@ -34,7 +34,7 @@ class Config(object):
     def update(self, dict_config):
         for attribute in self.__dict__:
             new = dict_config.get(attribute)
-            if new:
+            if new is not None:
                 self.__dict__[attribute].update(new)
 
 
@@ -100,10 +100,10 @@ def set_parser_for_trash(parser):
         '--restore', dest='restore_from_trash',
         nargs='+', help='Restore files from trash')
 
-    parser.add_argument(
-        '--check_hash', action='store_true',
-        dest='check_hash', help='Check hash when restore from trash'
-    )
+    # parser.add_argument(
+    #     '--check_hash', action='store_true',
+    #     dest='check_hash', help='Check hash when restore from trash'
+    # )
 
 
 def set_parser_with_common_flags(parser):
@@ -114,8 +114,7 @@ def set_parser_with_common_flags(parser):
         '--log', dest='log_file_path', action='store',
         help='Path to log file for this launch')
     parser.add_argument(
-        '--log_level', action='store_const',
-        const=const.LOG_LEVEL,
+        '--log_level', action='store',
         help='Path to log file for this launch')
 
     parser.add_argument(
@@ -135,8 +134,8 @@ def get_config_dict_from_trash_parser_namespace(namespace):
         "settings": {}
     }
 
-    if namespace.check_hash:
-        result["settings"]["check_hash"] = True
+    # if namespace.check_hash:
+    #     result["settings"]["check_hash"] = True
     if namespace.imitation:
         result["settings"]["dry_run"] = True
     if namespace.silent_mode:

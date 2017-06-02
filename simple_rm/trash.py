@@ -101,8 +101,8 @@ class TrashInfo(object):
             const.INFO_SECTION, const.FILE_HASH_OPTION
         )
 
-        self.size = config_parser.getint(
-            const.INFO_SECTION, const.SIZE_OPTION
+        self.size = long(
+            config_parser.get(const.INFO_SECTION, const.SIZE_OPTION, True)
         )
 
 
@@ -211,8 +211,8 @@ class Trash(object):
         return result_info_objects
 
     def restore(self, paths_to_restore):
-        self._time_clean_automatically()
-        result_info_objects = []                # regex?
+        # self._time_clean_automatically()
+        result_info_objects = []
 
         for path in paths_to_restore:
             path_in_trash = os.path.join(

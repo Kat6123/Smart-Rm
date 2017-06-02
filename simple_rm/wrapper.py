@@ -11,7 +11,7 @@ from simple_rm.trash import Trash
 def init_trash_by_config(config):
     confirm_removal = return_true
 
-    if config.remove["mode"] == const.PAY_ATTENTION_IF_NOT_WRITE_ACCESS_MODE:
+    if config.remove["mode"] == const.ATTENTION_IF_NOT_WRITE_ACCESS_MODE:
         confirm_removal = ask_if_file_has_not_write_access
     elif config.remove["mode"] == const.INTERACTIVE_MODE:
         confirm_removal = ask_remove

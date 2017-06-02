@@ -3,6 +3,7 @@ import os
 import os.path
 import stat
 import shutil
+import mock
 
 import simple_rm.constants as const
 import test.constants as test_const
@@ -130,7 +131,8 @@ class TestChecksWithOS(TestCase):
         os.chmod(parent_directory, no_read_wright_execute_all)
         self.assertTrue(check_parent_read_rights(file_in_tree))
 
-    def test_check_special_directory(self):
+    @mock.patch('os.path.ismount', side_effect=return_true)
+    def test_check_special_directory(self, mount):
         special_directories = [
             os.path.join(const.ROOT, root_inner) for root_inner in os.listdir(
                 const.ROOT
@@ -141,14 +143,12 @@ class TestChecksWithOS(TestCase):
         for directory in special_directories:
             self.assertTrue(check_system_directory(directory))
 
-        os.path.ismount = return_true
         self.assertTrue(check_system_directory("strange_path"))
 
         os.getuid = set_rights("not_root")
         for directory in special_directories:
             self.assertFalse(check_system_directory(directory))
 
-        os.path.ismount = return_true
         self.assertFalse(check_system_directory("strange_path"))
 
     def test_check_special_file(self):
