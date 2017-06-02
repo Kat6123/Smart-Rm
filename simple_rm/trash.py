@@ -1,4 +1,40 @@
 # -*- coding: utf-8 -*-
+"""Help on trash module.
+
+This module provides classes to work with Trash interface.
+It contains two classes: Trash, TrashInfo. Trash class has methods to
+remove to, restore from, view, clean trash. In all cases methods return
+list of TrashInfo objects. Each object is associated with file. You
+can use this object to get more information about the file and check
+if there were errors when operation performed.
+
+
+Example:
+    Create trash. If not override default parametrs then trash will be
+    created on '~/.local/share/trash' path and remove only list of files.
+
+        from simple_rm.trash import (
+            Trash,
+            TrashInfo
+        )
+
+        my_trash = Trash()
+        removed = my_trash.remove([file_path, "not_exist", "hello"])
+
+        for rm_obj in removed:
+            if rm_obj.errors:
+                for err in rm_obj.errors:
+                    print err
+            else:
+                print rm_obj
+
+    Attribute 'errors' can contain instances of classes
+    from 'simple_rm.error' module.
+
+Further information in Trash and TrashInfo docstrings.
+
+"""
+
 import ConfigParser
 import datetime
 import errno
@@ -7,8 +43,8 @@ import os
 import shutil
 
 import simple_rm.clean as clean
-import simple_rm.name_conflict as solve
 import simple_rm.constants as const
+import simple_rm.name_conflict as solve
 from simple_rm.check import (
     check_cycle,
     check_directory_access,
@@ -107,6 +143,35 @@ class TrashInfo(object):
 
 
 class Trash(object):
+    """Provides Trash API.
+
+    Attributes:
+        trash_location (str): Correct path to trash.
+            Defaults to '~/.local/share/trash'.
+        remove_mode (str): Can accept values "file", "directory", "tree".
+            It is used when remove to trash. Defaults to "file".
+        confirm_removal (func): This function enables additional confirmation
+            when remove file. Defaults to always return True.
+        dry_run (bool): If dry_run then trash actions such as remove, restore
+            and clean are not real. But returned objects describes files
+            such way as it was real. Defaults to False.
+        clean_policy (str): String which referred to some func
+            in 'simple_rm.clean'. Define trash behaviour when clean.
+            Can accept values "time", "size_time". Defaults to remove_all.
+        clean_parametr (obj): Specify clean parametrs, otherwise default.
+        conflict_policy (str): String which referred to some func
+            in 'simple_rm.name_conflict'. Define trash behaviour when remove,
+            but there are file whit the same name in trash.
+            Can accept values:
+                "ask_new_name", "give_new_name_depending_on_same_amount",
+                "skip", "replace_without_confirm", "confirm_and_replace".
+            Defaults to give_new_name_depending_on_same_amount.
+        max_size (int): Maximal size of trash for automatical cleaning.
+            Also it is used when emty space in trash is checking.
+        max_time_in_trash (str):Maximal time files stay in trash
+            for automatical cleaning.
+
+    """
     def __init__(
         self,
         trash_location=const.TRASH_LOCATION,
@@ -119,6 +184,18 @@ class Trash(object):
         max_size=const.MAX_TRASH_SIZE_IN_BYTES,
         max_time_in_trash=const.MAX_TIME_IN_TRASH
     ):
+        """Can override all trash attributes.
+
+        Init parametr's names matches with trash attributes.
+
+        Trash location is set uo with correct path.
+
+        If remove_mode is uncorrect string then will be used remove
+        "file" mode as default.
+
+        If confirm_removal is not callable object then always will return true.
+
+        """
         self.trash_location = get_correct_path(trash_location)
 
         if (remove_mode == const.REMOVE_FILE_MODE or
@@ -147,6 +224,41 @@ class Trash(object):
         self._trashinfo_config.add_section(const.INFO_SECTION)
 
     def remove(self, paths_to_remove, regex=None):
+        """Remove paths in list to trash.
+
+        Remove objects which are located on paths_to_remove.
+        If 'regex' is specified then remove objects with name which is matches
+        regelar ecpression in 'regex'.
+
+        Take into consideration 'remove_mode', 'dry_run' and 'confirm_removal'.
+
+        Args:
+            paths_to_remove (list of str)
+            regex (str)
+
+        Returns:
+            list of TrashInfo: Removed object is mapped to TrashInfo object.
+
+            If there are exceptions they will append to
+            TrashInfo object attribute.
+
+        Errors in TrashInfo objects :
+            AccessError:
+                1) Removable object parent directory has no read rights.
+                2) Removable object parent directory has no wright or execute
+                    or both rights.
+                3) Removable object is "fifo" or "socket".
+                3) Removable object is root, directory in root or mount point.
+            ExistError:
+                1) Removable object doesn't exist.
+            ModeError:
+                1) Try to remove directory or not empty directory when
+                remove_mode = "file".
+                2) Try to remove empty directory when
+                remove_mode = "directory".
+            SysError: Remove into itself.
+
+        """
         make_trash_if_not_exist(self.trash_location)
         # self._time_clean_automatically()            # XXX ?
 
@@ -182,7 +294,8 @@ class Trash(object):
                     )
                 except SmartError as error:
                     info_object.errors.append(error)
-                    result_info_objects.append(path_info_object)
+                    # result_info_objects.append(path_info_object)
+                    result_info_objects.append(info_object)
                     continue
 
                 if not self.dry_run:
@@ -211,6 +324,27 @@ class Trash(object):
         return result_info_objects
 
     def restore(self, paths_to_restore):
+        """Restore objects in list from trash.
+
+        Accept not full paths, just names in trash; can get them from
+        view() method of Trash.
+
+        Take into consideration 'dry_run'.
+
+        Args:
+            paths_to_restore (list of str): Names of objects to restore.
+
+        Returns:
+            list of TrashInfo: Restored object is mapped to TrashInfo object.
+
+            If there are exceptions they will append to
+            TrashInfo object attribute.
+
+        Errors in TrashInfo objects :
+            AccessError: Removable object parent directory
+                has no wright or execute or both rights.
+            ExistError: Restorable object doesn't exist.
+        """
         # self._time_clean_automatically()
         result_info_objects = []
 
@@ -259,6 +393,13 @@ class Trash(object):
         return result_info_objects
 
     def view(self):
+        """View objects in trash.
+
+        Return list of TrashInfo object which describe every file in trash.
+
+        Returns:
+            list of TrashInfo: Objects in trash is mapped to TrashInfo object.
+        """
         result = []
         make_trash_if_not_exist(self.trash_location)
 
@@ -278,6 +419,23 @@ class Trash(object):
         return result
 
     def clean(self, clean_policy=None, clean_parametr=None):
+        """Clean trash with specified clean_policy.
+
+        Remove objects which satisfy clean_policy from trash permanently.
+
+        Take into consideration 'clean_policy', 'clean_parametr' and 'dry_run'.
+
+        Args:
+            clean_policy (str): Defaults to self.clean_policy.
+            clean_parametr (str) Defaults to self.clean_parametr.
+
+        Returns:
+            list of TrashInfo: Removed object is mapped to TrashInfo object.
+
+            If there are exceptions they will append to
+            TrashInfo object attribute.
+
+        """
         if not clean_policy:
             clean_policy = self.clean_policy
         if not clean_parametr:
