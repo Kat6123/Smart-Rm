@@ -8,6 +8,7 @@ from unittest import (
 
 import simple_rm.constants as const
 from simple_rm.wrapper import (
+    ask_if_file_has_not_write_access,
     init_trash_by_config,
     ask_remove
 )
@@ -25,16 +26,9 @@ class TestWrapperFunctions(TestCase):
         trash = init_trash_by_config(self.config)
 
         self.assertEqual(
-            self.config.path_to["trash"],
-            trash.trash_location
-        )
-
-        self.assertEqual(
             self.config.remove["aim"],
             trash.remove_mode
         )
-
-        self.assertEqual(self.config.dry_run, trash.dry_run)
 
         self.config.remove["mode"] = const.INTERACTIVE_MODE
         trash = init_trash_by_config(self.config)
@@ -42,20 +36,27 @@ class TestWrapperFunctions(TestCase):
 
         self.config.remove["mode"] = const.FORCE_MODE
         trash = init_trash_by_config(self.config)
-        test_paths = ["abracadabra", "alalala",
-                      __file__, os.path.basename(__file__)]
-        for path in test_paths:
-            self.assertTrue(trash.confirm_removal(path))
+        self.assertTrue(lambda x: True, trash.confirm_removal)
 
-        # (
-        #     self.config.remove["mode"]=
-        #     const.PAY_ATTENTION_IF_NOT_WRITE_ACCESS_MODE
-        # )
-        # trash = init_trash_by_config(self.config)
-        # self.assertEqual(
-        #     ask_if_file_has_not_write_access,
-        #     trash.confirm_removal
-        # )
+        self.config.remove["mode"] = const.ATTENTION_IF_NOT_WRITE_ACCESS_MODE
+        trash = init_trash_by_config(self.config)
+        self.assertEqual(
+            ask_if_file_has_not_write_access,
+            trash.confirm_removal
+        )
+
+        self.assertEqual(self.config.settings["dry_run"], trash.dry_run)
+
+        self.assertEqual(
+            self.config.policies["solve_name_conflict"], trash.conflict_policy
+        )
+
+        self.assertEqual(
+            self.config.policies["clean"], trash.clean_policy
+        )
+        self.assertEqual(
+            self.config.policies["clean_parametr"], trash.clean_parametr
+        )
 
 
 if __name__ == '__main__':
