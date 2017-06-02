@@ -9,6 +9,9 @@ from unittest import (
 
 import simple_rm.constants as const
 from simple_rm.config import (
+    Config,
+    get_config_dict_from_trash_parser_namespace,
+    get_config_dict_from_remove_parser_namespace,
     set_parser_for_remove,
     set_parser_for_trash,
     set_parser_with_common_flags
@@ -105,6 +108,96 @@ class TestConfig(TestCase):
         self.assertTrue(nmsp.silent_mode)
         self.assertTrue(nmsp.verbose)
         self.assertTrue(nmsp.imitation)
+
+    def test_get_config_dict_from_remove_parser_namespace(self):
+        nmsp = argparse.Namespace(
+            rm_directory_recursively=False, rm_empty_directory=False,
+            ask_before_remove=False, force_remove=False,
+            log_file_path=None, imitation=False, silent_mode=False
+        )
+
+        res = {
+            "remove": {},
+            "path_to": {},
+            "settings": {}
+        }
+
+        res_dict = get_config_dict_from_remove_parser_namespace(nmsp)
+        self.assertDictEqual(res_dict, res)
+
+        nmsp.rm_empty_directory = True
+        nmsp.force_remove = True
+        nmsp.log_file_path = "path"
+        nmsp.imitation = True
+        nmsp.silent_mode = True
+
+        res_dict = get_config_dict_from_remove_parser_namespace(nmsp)
+        res = {
+            "remove": {"aim": "directory", "mode": "force"},
+            "path_to": {"log_file": "path"},
+            "settings": {"dry_run": True, "silent": True}
+        }
+        self.assertDictEqual(res_dict, res)
+
+        nmsp.rm_directory_recursively = True
+        nmsp.ask_before_remove = True
+        res_dict = get_config_dict_from_remove_parser_namespace(nmsp)
+        res = {
+            "remove": {"aim": "tree", "mode": "interactive"},
+            "path_to": {"log_file": "path"},
+            "settings": {"dry_run": True, "silent": True}
+        }
+        self.assertDictEqual(res_dict, res)
+
+    def test_get_config_dict_from_trash_parser_namespace(self):
+        nmsp = argparse.Namespace(
+            imitation=False, silent_mode=False,
+            log_file_path=None
+        )
+
+        res = {
+            "path_to": {},
+            "settings": {}
+        }
+
+        res_dict = get_config_dict_from_trash_parser_namespace(nmsp)
+        self.assertDictEqual(res_dict, res)
+
+        nmsp.imitation = True
+        nmsp.silent_mode = True
+        nmsp.log_file_path = "path"
+
+        res_dict = get_config_dict_from_trash_parser_namespace(nmsp)
+        res = {
+            "path_to": {"log_file": "path"},
+            "settings": {"dry_run": True, "silent": True}
+        }
+        self.assertDictEqual(res, res_dict)
+
+    def test_config_update(self):
+        config = Config()
+        copy = {}
+        for attr in config.__dict__:
+            copy[attr] = config.__dict__[attr].copy()
+
+        wrong_dict = {"wrong": "sddd", "lala": {}, "some": {"ho": "goodbye"}}
+        config.update(wrong_dict)
+        self.assertDictEqual(copy, config.__dict__)
+
+        new_dict = {
+            "remove": {"aim": "new", "mode": "new", "hello": "new"},
+            "path_to": {"trash": "new", "log_file": "new"},
+            "settings": {
+                "dry_run": "new", "silent": "new", "check_hash": "new"
+            }
+        }
+        config.update(new_dict)
+        for key in config.remove:
+            self.assertEqual(config.remove[key], "new")
+        for key in config.path_to:
+            self.assertEqual(config.path_to[key], "new")
+        for key in config.settings:
+            self.assertEqual(config.settings[key], "new")
 
 
 if __name__ == '__main__':
