@@ -4,7 +4,9 @@ import os
 import shutil
 
 import simple_rm.constants as const
+import simple_rm.error as errors
 from simple_rm.check import get_path_in_trash_info
+import logging
 
 
 def sort_by_deletion_date(obj_list):
@@ -41,7 +43,7 @@ def permanent_remove(info_object, trash_location):
         os.remove(trashinfo_path)
     except (shutil.Error, OSError) as error:
         info_object.errors.append(
-            SysError(error.errno, error.strerror, error.filename)
+            errors.SysError(error.errno, error.strerror, error.filename)
         )
 
 

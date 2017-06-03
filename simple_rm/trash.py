@@ -353,7 +353,6 @@ class Trash(object):
                     )
                 except SmartError as error:
                     info_object.errors.append(error)
-                    # result_info_objects.append(path_info_object)
                     result_info_objects.append(info_object)
                     continue
 
@@ -368,8 +367,10 @@ class Trash(object):
                     #     clean_policy="size_time",
                     #     clean_parametr=future_size
                     # )
-                    # if (clean.get_size(self.trash_location) +
-                    # info_object.size
+                    # if (clean.get_size(
+                    #     os.path.join(
+                    #         self.trash_location, const.TRASH_FILES_DIRECTORY)
+                    #     ) + info_object.size
                     #         > self.max_size):
                     #     info_object.errors.append(
                     #         SysError("File is too large")
@@ -378,7 +379,6 @@ class Trash(object):
                     if not info_object.errors:
                         self._smart_remove(info_object)
 
-                # result_info_objects.append(path_info_object)
                 result_info_objects.append(info_object)
 
         return result_info_objects
@@ -527,7 +527,7 @@ class Trash(object):
             objects_in_trash, valid_clean_parametr
         )
         if not self.dry_run:
-            for obj in objects_in_trash:
+            for obj in objects_for_remove:
                 clean.permanent_remove(obj, self.trash_location)
 
         return objects_for_remove
@@ -636,3 +636,8 @@ class Trash(object):
 
     def _size_clean_automatically(self):
         self.clean(clean_policy="size_time", clean_parametr=self.max_size)
+
+
+a = Trash()
+a.dry_run = True
+a.clean(clean_policy="size_time", clean_parametr=123)
