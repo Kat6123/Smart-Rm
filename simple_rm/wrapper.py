@@ -12,7 +12,7 @@ def init_trash_by_config(config):
     confirm_removal = return_true
 
     if config.remove["mode"] == const.ATTENTION_IF_NOT_WRITE_ACCESS_MODE:
-        confirm_removal = ask_if_file_has_not_write_access
+        confirm_removal = ask_not_write_access_file
     elif config.remove["mode"] == const.INTERACTIVE_MODE:
         confirm_removal = ask_remove
 
@@ -31,7 +31,7 @@ def init_trash_by_config(config):
     return result_trash
 
 
-def ask_if_file_has_not_write_access(path):
+def ask_not_write_access_file(path):
     if os.access(path, os.W_OK):
         return True
     elif ask_remove(path, special_info="write-protected"):

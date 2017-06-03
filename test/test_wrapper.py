@@ -8,7 +8,7 @@ from unittest import (
 
 import simple_rm.constants as const
 from simple_rm.wrapper import (
-    ask_if_file_has_not_write_access,
+    ask_not_write_access_file,
     init_trash_by_config,
     ask_remove
 )
@@ -41,7 +41,7 @@ class TestWrapperFunctions(TestCase):
         self.config.remove["mode"] = const.ATTENTION_IF_NOT_WRITE_ACCESS_MODE
         trash = init_trash_by_config(self.config)
         self.assertEqual(
-            ask_if_file_has_not_write_access,
+            ask_not_write_access_file,
             trash.confirm_removal
         )
 
