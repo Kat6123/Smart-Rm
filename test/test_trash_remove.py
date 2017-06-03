@@ -4,6 +4,7 @@ import os
 import errno
 import stat
 import simple_rm.constants as const
+import mock
 from unittest import (
     TestCase,
     main
@@ -19,10 +20,9 @@ from test.use_os import (
     create_empty_directory,
     create_file_dir_tree_in_directory,
     create_file_in_dir,
-    create_test_dir,
+    create_file,
     create_tree_in_dir,
     names_for_trash_files_info_in_dir,
-    remove_test_dir,
     remove_dir
 )
 
@@ -345,6 +345,127 @@ class TestTrashRemove(TestTrashMixin, TestCase):
         )
         for res in result:
             self.assertIn(res.initial_path, regex_paths)
+
+    @mock.patch('__builtin__.raw_input', return_value="new_name")
+    def test_name_conflict_ask_new_name(self, raw_inp):
+        file_path = create_file("ask_new_name")
+        rm = self.trash.remove([file_path])
+
+        file_path = os.path.abspath(create_file("ask_new_name"))
+        self.trash.conflict_policy = "ask_new_name"
+        rm = self.trash.remove([file_path])
+
+        self.assertTrue(os.path.exists(rm[0].path_in_trash))
+        self.assertEqual(os.path.basename(rm[0].path_in_trash), "new_name")
+        self.assertEqual(rm[0].initial_path, file_path)
+
+    @mock.patch('__builtin__.raw_input', return_value="")
+    def test_name_conflict_ask_new_name_excep(self, raw_inp):
+        file_path = create_file("ask_new_name")
+        rm = self.trash.remove([file_path])
+
+        file_path = os.path.abspath(create_file("ask_new_name"))
+        self.trash.conflict_policy = "ask_new_name"
+        rm = self.trash.remove([file_path])
+
+        self.assertTrue(os.path.exists(rm[0].initial_path))
+        with self.assertRaises(errors.SysError) as info:
+            raise rm[0].errors[0]
+
+        ex = info.exception
+        self.assertIn('Already exists', str(ex))
+
+    def test_skip(self):
+        file_path = create_file("skip")
+        rm = self.trash.remove([file_path])
+
+        file_path = os.path.abspath(create_file("skip"))
+        self.trash.conflict_policy = "skip"
+        rm = self.trash.remove([file_path])
+
+        self.assertTrue(os.path.exists(rm[0].initial_path))
+        with self.assertRaises(errors.SysError) as info:
+            raise rm[0].errors[0]
+
+        ex = info.exception
+        self.assertIn('Already exists', str(ex))
+
+    def test_give_new_name_depending_on_same_amount(self):
+        file_path = create_file("new_name")
+        rm = self.trash.remove([file_path])
+
+        file_path = os.path.abspath(create_file("new_name"))
+        self.trash.conflict_policy = "give_new_name_depending_on_same_amount"
+        rm = self.trash.remove([file_path])
+
+        self.assertTrue(os.path.exists(rm[0].path_in_trash))
+        self.assertEqual(os.path.basename(rm[0].path_in_trash), "new_name.1")
+        self.assertEqual(rm[0].initial_path, file_path)
+
+    def test_replace_without_confirm(self):
+        dir_path = create_empty_directory("repl_without_conf")
+        file_to_replace = create_file("file_replace")
+        new_file = os.path.abspath(
+            create_file_in_dir("file_replace", dir_path)
+        )
+
+        replaced = self.trash.remove([file_to_replace])
+        self.assertEqual(len(os.listdir(self.files)), 1)
+
+        self.trash.conflict_policy = "replace_without_confirm"
+        removed = self.trash.remove([new_file])
+
+        self.assertEqual(len(os.listdir(self.files)), 1)
+        self.assertTrue(os.path.exists(removed[0].path_in_trash))
+
+        in_trash = self.trash.view()
+        self.assertEqual(in_trash[0].initial_path, new_file)
+
+    @mock.patch('__builtin__.raw_input', return_value="y")
+    def test_confirm_yes_and_replace(self, yes):
+        dir_path = create_empty_directory("yes")
+        file_to_replace = create_file("file_replace")
+        new_file = os.path.abspath(
+            create_file_in_dir("file_replace", dir_path)
+        )
+
+        replaced = self.trash.remove([file_to_replace])
+        self.assertEqual(len(os.listdir(self.files)), 1)
+
+        self.trash.conflict_policy = "confirm_and_replace"
+        removed = self.trash.remove([new_file])
+
+        self.assertEqual(len(os.listdir(self.files)), 1)
+        self.assertTrue(os.path.exists(removed[0].path_in_trash))
+
+        in_trash = self.trash.view()
+        self.assertEqual(in_trash[0].initial_path, new_file)
+
+    @mock.patch('__builtin__.raw_input', return_value="n")
+    def test_confirm_no_and_replace(self, no):
+        dir_path = create_empty_directory("no")
+        file_to_replace = os.path.abspath(
+            create_file("file_no_repl")
+        )
+        new_file = os.path.abspath(
+            create_file_in_dir("file_no_repl", dir_path)
+        )
+
+        replaced = self.trash.remove([file_to_replace])
+        self.assertEqual(len(os.listdir(self.files)), 1)
+
+        self.trash.conflict_policy = "confirm_and_replace"
+        rm = self.trash.remove([new_file])
+
+        self.assertTrue(os.path.exists(rm[0].initial_path))
+        with self.assertRaises(errors.SysError) as info:
+            raise rm[0].errors[0]
+
+        ex = info.exception
+        self.assertIn('Already exists', str(ex))
+
+        in_trash = self.trash.view()
+        self.assertEqual(in_trash[0].initial_path, file_to_replace)
 
 
 if __name__ == '__main__':

@@ -2,6 +2,7 @@
 import os.path
 
 from simple_rm.clean import permanent_remove
+from simple_rm.error import SysError
 
 
 def ask_new_name(info_obj):
@@ -51,7 +52,7 @@ def confirm_and_replace(info_obj):
         "Do you want to rewrite {0}(y/n): "
         "".format(os.path.basename(info_obj.path_in_trash))
     )
-    if answer:
+    if answer == 'y':
         permanent_remove(
             info_obj, os.path.dirname(os.path.dirname(info_obj.path_in_trash))
         )
