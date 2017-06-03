@@ -72,7 +72,41 @@ from simple_rm.error import (
 
 
 class TrashInfo(object):
+    """Describes object in trash.
+
+    Class has attributes which describe properties of each object in trash.
+    It allows to save this information by 'write_info_with_config' method,
+    it happens, for example, when you remove object ot trash. Method
+    'read_info_with_config' allows read information from such files, which are
+    allocated in trash 'info' folder.
+
+    Attributes:
+        initial_path (str): Path before object being removed to trash.
+        path_in_trash (str): Path in trash.
+        deletion_date (datetime): Defaults to today.
+        sha256_value (int): Hash value of object in trash.
+        size (int): Size in bytes.
+        errors (list of SmartError): Errors which occure, when remove,
+            restore or clean object.
+
+    """
     def __init__(self, path, trash_location):
+        """Init TrashInfo object.
+
+        The __init__ accept 'path' and 'trash_location' and setup initial_path
+        as correct 'path'.
+
+        Defaults to:
+            'deletion_date' - today,
+            'sha256_value' - 0,
+            size - 0,
+            errors - empty list.
+
+        Args:
+            path (str): Path to object in file system.
+            trash_location (str): Full path to trash.
+
+        """
         self.initial_path = get_correct_path(path)
         self.path_in_trash = get_path_in_trash(path, trash_location)
 
@@ -96,6 +130,21 @@ class TrashInfo(object):
         )
 
     def write_info_with_config(self, file_path, config_parser):
+        """Write information about TrashInfo object to file.
+
+        ConfigParser should have:
+            'Info' section with options:
+                'Path': contains initial path
+                'Date': date of deletion in special format
+                'Size': size of file system object
+                'Hash': hash of file system object
+
+        Args:
+            file_path (str): File to write.
+            config_parser (obj: ConfigParser): Object will used to write
+                TrashInfo, that is why shoud have special options and sections.
+
+        """
         config_parser.set(                 # wrap in try catch
             const.INFO_SECTION, const.OLD_PATH_OPTION, self.initial_path
         )
@@ -118,6 +167,16 @@ class TrashInfo(object):
                 config_parser.write(fp)
 
     def read_info_with_config(self, file_path, config_parser):
+        """Read information  from file_path by ConfigParser object.
+
+        ConfigParser should have structure which are described in
+        'write_info_with_config' doc.
+
+        Args:
+            file_path (str): File to read.
+            config_parser (obj: ConfigParser): Object will used to read
+                TrashInfo, that is why shoud have special options and sections.
+        """
         config_parser.read(file_path)
 
         self.initial_path = config_parser.get(
@@ -309,7 +368,8 @@ class Trash(object):
                     #     clean_policy="size_time",
                     #     clean_parametr=future_size
                     # )
-                    # if (clean.get_size(self.trash_location) + info_object.size
+                    # if (clean.get_size(self.trash_location) +
+                    # info_object.size
                     #         > self.max_size):
                     #     info_object.errors.append(
                     #         SysError("File is too large")
