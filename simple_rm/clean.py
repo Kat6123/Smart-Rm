@@ -47,7 +47,7 @@ def permanent_remove(info_object, trash_location):
         )
 
 
-def get_valid_clean_parametr_by_remove_all_policy(parametr):
+def get_valid_parametr_by_remove_all_policy(parametr):
     return parametr
 
 
@@ -58,7 +58,7 @@ def get_object_list_by_remove_all_policy(
     return obj_list
 
 
-def get_valid_clean_parametr_by_time_policy(timedelta_str):
+def get_valid_parametr_by_time_policy(timedelta_str):
     min_datetime = datetime.datetime.strptime(
         const.EMPTY_STRING, const.EMPTY_STRING
     )

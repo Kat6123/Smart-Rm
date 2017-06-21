@@ -145,7 +145,11 @@ class TestTrashRemove(TestTrashMixin, TestCase):
         for path in (file_path, dir_path, tree_path):
             test_paths.append(
                 os.path.join(
-                    info, os.path.basename(path) + const.INFO_FILE_EXPANSION
+                    info,
+                    "{basename}.{extension}".format(
+                        basename=os.path.basename(path),
+                        extension=const.INFO_FILE_EXPANSION
+                    )
                 )
             )
 

@@ -23,7 +23,7 @@ REMOVE_DATE_OPTION = "Date"
 DATE_FORMAT = "%d.%m.%Y  %H:%M"
 TIME_DELTA_FORMAT = "%W months %d days %H hours %M minutes"
 
-INFO_FILE_EXPANSION = ".trashinfo"
+INFO_FILE_EXTENSION = ".trashinfo"
 
 APP_DIRECTORY = "~/.smart_remove"
 DEFAULT_CONFIG_NAME = "config.cfg"

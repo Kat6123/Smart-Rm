@@ -43,7 +43,7 @@ def get_path_in_trash(path, trash_location):
 def get_path_in_trash_info(path, trash_location):
     return os.path.join(
         trash_location, const.TRASH_INFO_DIRECTORY,
-        os.path.basename(path) + const.INFO_FILE_EXPANSION
+        os.path.basename(path) + const.INFO_FILE_EXTENSION
     )
 
 
