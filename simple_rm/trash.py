@@ -183,7 +183,7 @@ class TrashInfo(object):
             const.INFO_SECTION, const.OLD_PATH_OPTION
         )
         self.path_in_trash = get_path_in_trash(
-            file_path.split(const.INFO_FILE_EXTENSION)[0],
+            file_path.split(const.INFO_FILE_EXPANSION)[0],
             os.path.dirname(os.path.dirname(file_path))
         )
 
@@ -283,9 +283,8 @@ class Trash(object):
         self._trashinfo_config.add_section(const.INFO_SECTION)
 
     def synchronized_remove(
-        self, paths_to_remove, lock_trash, lock_remove, regex=None
+        self, paths_to_remove, lock_trash, lock_remove, queue, regex=None
     ):
-        result = []
         with lock_trash:
             make_trash_if_not_exist(self.trash_location)
 
@@ -300,7 +299,7 @@ class Trash(object):
                 self._run_remove_checks(correct_path, self.trash_location)
             except SmartError as error:
                 path_info_object.errors.append(error)
-                result.append(path_info_object)
+                queue.put(path_info_object)
                 continue
 
             items_to_remove = self._get_paths_to_remove_from_tree(
@@ -320,7 +319,7 @@ class Trash(object):
                     )
                 except SmartError as error:
                     info_object.errors.append(error)
-                    result.append(info_object)
+                    queue.put(info_object)
                     continue
 
                 if not self.dry_run:
@@ -332,9 +331,9 @@ class Trash(object):
                         with lock_remove:
                             self._smart_remove(info_object)
 
-                result.append(info_object)
+                queue.put(info_object)
 
-        return result
+        queue.cancel_join_thread()
 
     def remove(self, paths_to_remove, regex=None):
         """Remove paths in list to trash.
@@ -450,7 +449,7 @@ class Trash(object):
             )
             path_in_info = os.path.join(
                 self.trash_location, const.TRASH_INFO_DIRECTORY,
-                path + const.INFO_FILE_EXTENSION
+                path + const.INFO_FILE_EXPANSION
             )
 
             path_info_object = TrashInfo("", self.trash_location)
@@ -531,8 +530,6 @@ class Trash(object):
             TrashInfo object attribute.
 
         """
-        make_trash_if_not_exist(self.trash_location)
-
         if not clean_policy:
             clean_policy = self.clean_policy
         if not clean_parametr:
@@ -568,32 +565,6 @@ class Trash(object):
                 clean.permanent_remove(obj, self.trash_location)
 
         return objects_for_remove
-
-    def remove_files_from_trash_permanently(self, paths_to_remove):
-        result = []
-
-        make_trash_if_not_exist(self.trash_location)
-        trashinfo_path = os.path.join(
-            self.trash_location, const.TRASH_INFO_DIRECTORY
-        )
-
-        for path in paths_to_remove:
-            info_object = TrashInfo("", self.trash_location)
-
-            info_object.read_info_with_config(
-                os.path.join(
-                    trashinfo_path,
-                    "{name}{ext}".format(
-                        name=os.path.basename(path),
-                        ext=const.INFO_FILE_EXTENSION
-                    )
-                ),
-                self._trashinfo_config
-            )
-            clean.permanent_remove(info_object, self.trash_location)
-            result.append(info_object)
-
-        return result
 
     def _run_access_checks(self, source, destination):
         if not check_path_is_directory(destination):
