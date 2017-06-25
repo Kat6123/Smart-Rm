@@ -566,6 +566,31 @@ class Trash(object):
 
         return objects_for_remove
 
+    def remove_files_from_trash_permanently(self, paths_to_remove):
+        result = []
+
+        make_trash_if_not_exist(self.trash_location)
+        trashinfo_path = os.path.join(
+            self.trash_location, const.TRASH_INFO_DIRECTORY
+        )
+        for path in paths_to_remove:
+            info_object = TrashInfo("", self.trash_location)
+
+            info_object.read_info_with_config(
+                os.path.join(
+                    trashinfo_path,
+                    "{name}{ext}".format(
+                        name=os.path.basename(path),
+                        ext=const.INFO_FILE_EXTENSION
+                    )
+                ),
+                self._trashinfo_config
+            )
+            clean.permanent_remove(info_object, self.trash_location)
+            result.append(info_object)
+
+        return result
+
     def _run_access_checks(self, source, destination):
         if not check_path_is_directory(destination):
             raise SysError(
